@@ -11,7 +11,6 @@ import (
 
 // GetAllProducts from db
 func GetAllProducts(c *fiber.Ctx) error {
-	println("fucking waffles man")
 	rows, err := database.DB.Query("SELECT name, description, category, amount FROM products order by name")
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{

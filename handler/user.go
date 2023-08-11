@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -51,29 +52,48 @@ func Login(c *fiber.Ctx) {
 }
 
 func FetchCode(c *fiber.Ctx) error {
-	user := new(model.User)
-	if err := c.BodyParser(user); err != nil {
+	dto := new(model.User)
+	if err := c.BodyParser(dto); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": err,
 		})
 	}
 
-	if user.UserName != "john" {
+	if dto.UserName != "john" {
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
-	// Create the Claims
+	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE email = $1", dto.Email)
+
+	if errFromDb != nil {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+
+	defer userFromDb.Close()
+
+	user := model.User{}
+
+	for userFromDb.Next() {
+		switch err := userFromDb.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive); err {
+		case sql.ErrNoRows:
+			return c.SendStatus(fiber.StatusUnauthorized)
+		case nil:
+			// Expected outcome, user found
+		default:
+			return c.SendStatus(fiber.StatusUnauthorized)
+		}
+	}
+
 	claims := jwt.MapClaims{
 		"user": user,
 		"exp":  time.Now().Add(time.Hour * 72).Unix(),
 	}
 
-	// Create token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte("secret"))
+
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
