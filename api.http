@@ -16,3 +16,8 @@ Content-Type: application/json
   "email": "meep@blargh.com",
   "user_name": "john"
 }
+
+### get test
+GET http://localhost:3000/api/group/get
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTE5ODU4MzMsInVzZXIiOnsidXNlcl9pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInVzZXJfbmFtZSI6ImpvaG4iLCJlbWFpbCI6Im1lZXBAYmxhcmdoLmNvbSIsImlzX2FjdGl2ZSI6ZmFsc2UsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZX19.z0wkJ9I44GvLpY3ezVpz6mJnml1r3mkEPlC1fQhQajw
