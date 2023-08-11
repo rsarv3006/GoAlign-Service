@@ -3,12 +3,14 @@ module gitlab.com/donutsahoy/yourturn-fiber
 go 1.19
 
 require (
+	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
-	github.com/gofiber/basicauth v0.2.2 // indirect
+	github.com/gofiber/contrib/jwt v1.0.4 // indirect
 	github.com/gofiber/fiber v1.13.3 // indirect
 	github.com/gofiber/fiber/v2 v2.48.0 // indirect
 	github.com/gofiber/logger v0.2.4 // indirect
 	github.com/gofiber/utils v0.0.9 // indirect
+	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/schema v1.1.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect

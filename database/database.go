@@ -28,6 +28,7 @@ func Connect() error {
 		return err
 	}
 	CreateProductTable()
+	CreateUserTable()
 	fmt.Println("Connection Opened to Database")
 	return nil
 }

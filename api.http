@@ -1,14 +1,18 @@
-### TEST
-GET http://localhost:3000/home
-Content-Type: application/json
-
-### OTHER
-POST http://localhost:3000/api
+### AUTH
+### register
+POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
 {
-    "name": "test",
-    "description": "test",
-    "category": "test",
-    "amount": 1
+  "user_name": "meep",
+  "email": "meep@yeet.com"
+}
+
+### fetch code
+POST http://localhost:3000/api/auth/code
+Content-Type: application/json
+
+{
+  "email": "meep@blargh.com",
+  "user_name": "john"
 }

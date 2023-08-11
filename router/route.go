@@ -1,8 +1,8 @@
 package router
 
 import (
-	"github.com/gofiber/fiber"
-	"github.com/gofiber/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gitlab.com/donutsahoy/yourturn-fiber/handler"
 )
 
@@ -13,8 +13,9 @@ func SetupRoutes(app *fiber.App) {
 
 	api := app.Group("/api", logger.New())
 	// routes
-	api.Get("/", handler.GetAllProducts)
-	api.Get("/:id", handler.GetSingleProduct)
-	api.Post("/", handler.CreateProduct)
-	api.Delete("/:id", handler.DeleteProduct)
+
+	auth := api.Group("/auth", logger.New())
+	auth.Post("/register", handler.Register)
+	// auth.Post("/login", handler.Login)
+	auth.Post("/code", handler.FetchCode)
 }
