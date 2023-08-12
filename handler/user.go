@@ -2,6 +2,8 @@ package handler
 
 import (
 	"database/sql"
+	"log"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -37,6 +39,13 @@ func Register(c *fiber.Ctx) error {
 		user.UserName,
 		user.Email,
 		user.IsActive); err != nil {
+		log.Println(err)
+		if strings.Contains(err.Error(), `"users_email_key"`) {
+			return c.Status(400).JSON(&fiber.Map{
+				"success": false,
+				"message": "Email already exists",
+			})
+		}
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 

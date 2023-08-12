@@ -1,47 +1,52 @@
 package database
 
-func CreateProductTable() {
-	DB.Query(`CREATE TABLE IF NOT EXISTS products (
-    id SERIAL PRIMARY KEY,
-    amount integer,
-    name text UNIQUE,
-    description text,
-    category text NOT NULL
-)
-`)
-}
+import "log"
 
 func CreateUserTable() {
-	DB.Query(`CREATE TABLE IF NOT EXISTS users (
-  user_id UUID PRIMARY KEY,
-  user_name VARCHAR(50), 
-  email VARCHAR(100),
-  is_active BOOLEAN
-  is_email_verified BOOLEAN
+	log.Println("Creating users table")
+	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS users (
+  user_id UUID PRIMARY KEY default gen_random_uuid(),
+  user_name VARCHAR(50) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  is_email_verified BOOLEAN NOT NULL DEFAULT FALSE
 );
 `)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func CreateTeamTable() {
-	DB.Query(`CREATE TABLE IF NOT EXISTS teams (
-  team_id UUID,
-  team_name VARCHAR(255),
-  creator_user_id UUID,
-  status VARCHAR(255),
-  team_manager_id UUID,
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP,
-  PRIMARY KEY (team_id)
+	log.Println("Creating teams table")
+	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS teams (
+  team_id UUID NOT NULL PRIMARY KEY default gen_random_uuid(),
+  team_name VARCHAR(255) NOT NULL,
+  creator_user_id UUID NOT NULL,
+  status VARCHAR(255) NOT NULL DEFAULT 'active',
+  team_manager_id UUID NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );`)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func CreateUserTeamMembershipTable() {
-	DB.Query(`CREATE TABLE IF NOT EXISTS user_team_membership (
-  user_id UUID,
-  team_id UUID,
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP,
-  status VARCHAR(255),
-  PRIMARY KEY (user_id, team_id)
+	log.Println("Creating user_team_membership table")
+	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS user_team_membership (
+  user_team_membership_id UUID NOT NULL PRIMARY KEY default gen_random_uuid(),
+  user_id UUID NOT NULL,
+  team_id UUID NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  status VARCHAR(255) NOT NULL DEFAULT 'active'
 );`)
+
+	if err != nil {
+		panic(err)
+	}
 }

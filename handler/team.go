@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -47,9 +46,7 @@ func CreateTeam(c *fiber.Ctx) error {
 		})
 	}
 
-	query := `INSERT INTO teams (team_id, team_name, creator_user_id, status, team_manager_id, created_at, updated_at)  
-VALUES ($1, $2, $3, $4, $5, $6, $7)`
-
+	query := database.TeamCreateQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
@@ -66,18 +63,12 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	}
 	defer stmt.Close()
 
-	team := model.Team{
-		TeamId:        uuid.New(),
-		TeamName:      teamdto.TeamName,
-		CreatorUserId: userId,
-		Status:        "active",
-		TeamManagerId: userId,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-	}
+	team := new(model.Team)
 
-	if _, err := stmt.Exec(team.TeamId, team.TeamName, team.CreatorUserId, team.Status, team.TeamManagerId, team.CreatedAt, team.UpdatedAt); err != nil {
-		println("error preparing query")
+	rows, err := stmt.Query(teamdto.TeamName, userId, userId)
+
+	if err != nil {
+		println("error executing query")
 		switch e := err.(type) {
 		case *pq.Error:
 			fmt.Println("Postgres error:", e.Message)
@@ -87,6 +78,14 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 		}
 		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
+		if err != nil {
+			fmt.Println(err)
+			return c.SendStatus(fiber.StatusInternalServerError)
+		}
 	}
 
 	return c.Status(201).JSON(&fiber.Map{

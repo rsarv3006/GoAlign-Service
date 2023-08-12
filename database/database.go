@@ -29,7 +29,6 @@ func Connect() error {
 	}
 
 	fmt.Println("Creating tables if needed...")
-	CreateProductTable()
 	CreateUserTable()
 	CreateTeamTable()
 	CreateUserTeamMembershipTable()
