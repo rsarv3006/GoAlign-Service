@@ -21,3 +21,27 @@ func CreateUserTable() {
 );
 `)
 }
+
+func CreateTeamTable() {
+	DB.Query(`CREATE TABLE IF NOT EXISTS teams (
+  team_id UUID,
+  team_name VARCHAR(255),
+  creator_user_id UUID,
+  status VARCHAR(255),
+  team_manager_id UUID,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  PRIMARY KEY (team_id)
+);`)
+}
+
+func CreateUserTeamMembershipTable() {
+	DB.Query(`CREATE TABLE IF NOT EXISTS user_team_membership (
+  user_id UUID,
+  team_id UUID,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  status VARCHAR(255),
+  PRIMARY KEY (user_id, team_id)
+);`)
+}

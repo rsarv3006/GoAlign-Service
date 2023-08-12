@@ -17,7 +17,12 @@ Content-Type: application/json
   "user_name": "john"
 }
 
-### get test
-GET http://localhost:3000/api/group/get
+### TEAM
+### create team
+POST http://localhost:3000/api/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTE5ODU4MzMsInVzZXIiOnsidXNlcl9pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInVzZXJfbmFtZSI6ImpvaG4iLCJlbWFpbCI6Im1lZXBAYmxhcmdoLmNvbSIsImlzX2FjdGl2ZSI6ZmFsc2UsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZX19.z0wkJ9I44GvLpY3ezVpz6mJnml1r3mkEPlC1fQhQajw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTIwNTY5MDIsInVzZXIiOnsidXNlcl9pZCI6IjkzNTEzZjhkLThiMTEtNGQxNy1hOWUzLTBlMTgwODc2MmY4ZCIsInVzZXJfbmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZX19.STNhbnFVrHTeQKWTInhg3qiBivE1p2JyR4K-y2Iy1bw
+
+{
+  "team_name": "yeet"
+}
