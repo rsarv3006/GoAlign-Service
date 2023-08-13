@@ -21,8 +21,8 @@ Content-Type: application/json
 ### create team
 POST http://localhost:3000/api/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTIxNTMzMzEsInVzZXIiOnsidXNlcl9pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMCIsInVzZXJfbmFtZSI6IiIsImVtYWlsIjoiIiwiaXNfYWN0aXZlIjpmYWxzZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfX0._5EG6-MTz1ZbdvPIXFrIphu8va-24jOY9CO3tVUbm8A
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI2ZGRkZWU0OS02ZjZkLTQxZTgtOTFlNC0zNTdiMWRlZmViY2MiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTE5NTc1ODl9.TkiIm8rLiGRGQTC6i84pNyT7Uq5IkwqSxq9Jjrpbk38
 
 {
-  "team_name": "yeet"
+  "team_name": "waffles"
 }

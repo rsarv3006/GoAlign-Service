@@ -11,6 +11,7 @@ require (
 	github.com/gofiber/jwt/v3 v3.3.10 // indirect
 	github.com/gofiber/logger v0.2.4 // indirect
 	github.com/gofiber/utils v0.0.9 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect

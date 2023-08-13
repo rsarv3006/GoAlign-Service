@@ -2,33 +2,30 @@ package handler
 
 import (
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func CreateTeam(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	userFromClaim := claims["user"]
-	userMap := userFromClaim.(map[string]interface{})
+	log.Println("CreateTeam")
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
 
-	var userId uuid.UUID
-	userId, err := uuid.Parse(userMap["user_id"].(string))
 	if err != nil {
-		fmt.Println("error parsing uuid from token")
-		fmt.Println(err)
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
 		})
 	}
 
+	log.Println("post token stuff")
 	teamdto := new(model.Team)
 
 	if err := c.BodyParser(teamdto); err != nil {
@@ -67,7 +64,7 @@ func CreateTeam(c *fiber.Ctx) error {
 	team := new(model.Team)
 
 	cleanedTeamName := helper.SanitizeInput(teamdto.TeamName)
-	rows, err := stmt.Query(cleanedTeamName, userId, userId)
+	rows, err := stmt.Query(cleanedTeamName, currentUser.UserId, currentUser.UserId)
 
 	if err != nil {
 		println("error executing query")
@@ -90,12 +87,10 @@ func CreateTeam(c *fiber.Ctx) error {
 		}
 	}
 
-	fmt.Println("Team Handler")
-	fmt.Println(userId)
-	fmt.Println(team.TeamId)
-	fmt.Println("Team Handler")
+	log.Println("team created successfully")
+	log.Println(team)
 
-	userTeamMembership, err := CreateUserTeamMembership(userId, team.TeamId)
+	userTeamMembership, err := CreateUserTeamMembership(currentUser.UserId, team.TeamId)
 	if err != nil {
 		fmt.Println(err)
 		return c.Status(500).JSON(&fiber.Map{

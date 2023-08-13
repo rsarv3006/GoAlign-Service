@@ -7,4 +7,5 @@ const TeamCreateQueryString = `
     team_manager_id
   )  
   VALUES ($1, $2, $3)
+  RETURNING *;
 `

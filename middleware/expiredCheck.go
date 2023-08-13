@@ -8,7 +8,6 @@ import (
 )
 
 func IsExpired() fiber.Handler {
-
 	return func(c *fiber.Ctx) error {
 		token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 		_, err := auth.ValidateToken(token)

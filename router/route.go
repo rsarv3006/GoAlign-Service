@@ -1,7 +1,8 @@
 package router
 
 import (
-	jwtware "github.com/gofiber/contrib/jwt"
+	"log"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gitlab.com/donutsahoy/yourturn-fiber/handler"
@@ -12,6 +13,7 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
 
+	log.Println("setting up routes thing 1")
 	setupAuthRoutes(api)
 	setUpTeamRoutes(api)
 }
@@ -27,12 +29,11 @@ func setupAuthRoutes(api fiber.Router) {
 func setUpTeamRoutes(api fiber.Router) {
 	team := api.Group("/team", logger.New())
 
-	team.Use(jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
-	}))
 	team.Use(logger.New())
+	log.Println("pre is expired")
 	team.Use(middleware.IsExpired())
 
+	log.Println("post is expired")
 	team.Post("/", handler.CreateTeam)
 	// team.Get("/", handler.GetAllTeams)
 	// team.Get("/:id", handler.GetTeam)

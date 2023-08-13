@@ -2,16 +2,15 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -69,12 +68,14 @@ func FetchCode(c *fiber.Ctx) error {
 	}
 
 	if dto.UserName != "john" {
+		fmt.Println("dto.UserName")
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
 	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE email = $1", dto.Email)
 
 	if errFromDb != nil {
+		fmt.Println("errFromDb")
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
@@ -83,24 +84,22 @@ func FetchCode(c *fiber.Ctx) error {
 	user := model.User{}
 
 	for userFromDb.Next() {
-		switch err := userFromDb.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive); err {
+		switch err := userFromDb.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified); err {
 		case sql.ErrNoRows:
+			fmt.Println("sql.ErrNoRows")
 			return c.SendStatus(fiber.StatusUnauthorized)
 		case nil:
 			// Expected outcome, user found
 		default:
+			fmt.Println(err)
+			fmt.Println("default error thing")
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
 	}
-
-	claims := jwt.MapClaims{
-		"user": user,
-		"exp":  time.Now().Add(time.Hour * 72).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedTokenString, err := token.SignedString([]byte("secret"))
+	log.Println("user")
+	log.Println(user)
+	log.Println("user")
+	signedTokenString, err := auth.GenerateJWT(user)
 
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)

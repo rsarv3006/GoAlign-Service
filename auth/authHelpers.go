@@ -2,39 +2,38 @@ package auth
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 var jwtKey = []byte("supersecretkey")
 
-type JWTClaim struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	UserID   uint   `json:"userId"`
+type JWTClaims struct {
+	User model.User
 	jwt.StandardClaims
 }
 
-func GenerateJWT(email string, username string, userID uint) (tokenString string, err error) {
+func GenerateJWT(user model.User) (*string, error) {
+	log.Println(user)
 	expirationTime := time.Now().Add(1 * time.Hour)
-	claims := &JWTClaim{
-		Email:    email,
-		Username: username,
-		UserID:   userID,
+	claims := &JWTClaims{
+		User: user,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err = token.SignedString(jwtKey)
-	return
+	tokenString, err := token.SignedString(jwtKey)
+	return &tokenString, err
 }
 
-func ValidateToken(signedToken string) (*uint, error) {
+func ValidateToken(signedToken string) (*model.User, error) {
 	token, err := jwt.ParseWithClaims(
 		signedToken,
-		&JWTClaim{},
+		&JWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			return []byte(jwtKey), nil
 		},
@@ -43,7 +42,7 @@ func ValidateToken(signedToken string) (*uint, error) {
 	if err != nil {
 		return nil, err
 	}
-	claims, ok := token.Claims.(*JWTClaim)
+	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
 		err = errors.New("couldn't parse claims")
 		return nil, err
@@ -52,5 +51,5 @@ func ValidateToken(signedToken string) (*uint, error) {
 		err = errors.New("token expired")
 		return nil, err
 	}
-	return &claims.UserID, nil
+	return &claims.User, nil
 }
