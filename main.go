@@ -26,9 +26,12 @@ func main() {
 
 	router.SetupRoutes(app)
 
-	println("Setup routes...")
+	println("Routes setup.")
 
 	// listen on port 3000
-	app.Listen(":3000")
+	err := app.Listen(":3000")
 
+	if err != nil {
+		log.Fatal(err)
+	}
 }

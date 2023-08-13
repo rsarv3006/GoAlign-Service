@@ -10,17 +10,26 @@ import (
 	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
+	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func Register(c *fiber.Ctx) error {
-	user := new(model.User)
-	if err := c.BodyParser(user); err != nil {
+	userCreateDto := new(model.UserCreateDto)
+	if err := c.BodyParser(userCreateDto); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": err,
 		})
 	}
+
+	user := new(model.User)
+
+	userName := helper.SanitizeInput(userCreateDto.UserName)
+	email := helper.SanitizeInput(userCreateDto.Email)
+
+	user.UserName = userName
+	user.Email = email
 
 	if user.UserName == "" || user.Email == "" {
 		return c.Status(400).JSON(&fiber.Map{
@@ -59,6 +68,8 @@ func Login(c *fiber.Ctx) {
 }
 
 func FetchCode(c *fiber.Ctx) error {
+	println("FetchCode UGHHHHH")
+	log.Println("FetchCode")
 	dto := new(model.User)
 	if err := c.BodyParser(dto); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
@@ -96,9 +107,7 @@ func FetchCode(c *fiber.Ctx) error {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
 	}
-	log.Println("user")
-	log.Println(user)
-	log.Println("user")
+
 	signedTokenString, err := auth.GenerateJWT(user)
 
 	if err != nil {

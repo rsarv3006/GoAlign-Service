@@ -14,6 +14,7 @@ func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
 
 	log.Println("setting up routes thing 1")
+
 	setupAuthRoutes(api)
 	setUpTeamRoutes(api)
 }
@@ -23,7 +24,11 @@ func setupAuthRoutes(api fiber.Router) {
 
 	auth.Post("/register", handler.Register)
 	// auth.Post("/login", handler.Login)
+	log.Println("setting up routes thing 2")
 	auth.Post("/code", handler.FetchCode)
+	auth.Get("/test", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World 👋!")
+	})
 }
 
 func setUpTeamRoutes(api fiber.Router) {

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,7 +13,6 @@ import (
 )
 
 func CreateTeam(c *fiber.Ctx) error {
-	log.Println("CreateTeam")
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
 
@@ -25,11 +23,9 @@ func CreateTeam(c *fiber.Ctx) error {
 		})
 	}
 
-	log.Println("post token stuff")
-	teamdto := new(model.Team)
+	teamdto := new(model.TeamCreateDto)
 
 	if err := c.BodyParser(teamdto); err != nil {
-		println("error parsing teamdto")
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": err,
@@ -37,7 +33,6 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 
 	if teamdto.TeamName == "" {
-		println("team name is required")
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "Team name is required",
@@ -48,7 +43,6 @@ func CreateTeam(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		println("error preparing query")
 		switch e := err.(type) {
 		case *pq.Error:
 			fmt.Println("Postgres error:", e.Message)
@@ -67,7 +61,6 @@ func CreateTeam(c *fiber.Ctx) error {
 	rows, err := stmt.Query(cleanedTeamName, currentUser.UserId, currentUser.UserId)
 
 	if err != nil {
-		println("error executing query")
 		switch e := err.(type) {
 		case *pq.Error:
 			fmt.Println("Postgres error:", e.Message)
@@ -87,12 +80,8 @@ func CreateTeam(c *fiber.Ctx) error {
 		}
 	}
 
-	log.Println("team created successfully")
-	log.Println(team)
-
 	userTeamMembership, err := CreateUserTeamMembership(currentUser.UserId, team.TeamId)
 	if err != nil {
-		fmt.Println(err)
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
 			"message": err,
