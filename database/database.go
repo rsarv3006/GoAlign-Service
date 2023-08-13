@@ -32,6 +32,7 @@ func Connect() error {
 	CreateUserTable()
 	CreateTeamTable()
 	CreateUserTeamMembershipTable()
+	CreateTeamSettingsTable()
 
 	fmt.Println("Connection Opened to Database")
 	return nil

@@ -33,7 +33,6 @@ func Register(c *fiber.Ctx) error {
 	user.UserId = uuid.New()
 	user.IsActive = true
 
-	// Insert user into database
 	if _, err := database.DB.Query("INSERT INTO users (user_id, user_name, email, is_active) VALUES ($1, $2, $3, $4)",
 		user.UserId,
 		user.UserName,
@@ -101,12 +100,12 @@ func FetchCode(c *fiber.Ctx) error {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	t, err := token.SignedString([]byte("secret"))
+	signedTokenString, err := token.SignedString([]byte("secret"))
 
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	return c.JSON(fiber.Map{"token": t})
+	return c.JSON(fiber.Map{"token": signedTokenString})
 
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
+	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
@@ -65,7 +66,8 @@ func CreateTeam(c *fiber.Ctx) error {
 
 	team := new(model.Team)
 
-	rows, err := stmt.Query(teamdto.TeamName, userId, userId)
+	cleanedTeamName := helper.SanitizeInput(teamdto.TeamName)
+	rows, err := stmt.Query(cleanedTeamName, userId, userId)
 
 	if err != nil {
 		println("error executing query")
@@ -88,9 +90,24 @@ func CreateTeam(c *fiber.Ctx) error {
 		}
 	}
 
+	fmt.Println("Team Handler")
+	fmt.Println(userId)
+	fmt.Println(team.TeamId)
+	fmt.Println("Team Handler")
+
+	userTeamMembership, err := CreateUserTeamMembership(userId, team.TeamId)
+	if err != nil {
+		fmt.Println(err)
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
 	return c.Status(201).JSON(&fiber.Map{
 		"success": true,
 		"message": "Team created successfully",
 		"team":    team,
+		"members": userTeamMembership,
 	})
 }

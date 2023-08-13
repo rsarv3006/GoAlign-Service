@@ -12,12 +12,16 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
 
+	setupAuthRoutes(api)
+	setUpTeamRoutes(api)
+}
+
+func setupAuthRoutes(api fiber.Router) {
 	auth := api.Group("/auth", logger.New())
+
 	auth.Post("/register", handler.Register)
 	// auth.Post("/login", handler.Login)
 	auth.Post("/code", handler.FetchCode)
-
-	setUpTeamRoutes(api)
 }
 
 func setUpTeamRoutes(api fiber.Router) {
