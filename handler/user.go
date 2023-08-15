@@ -26,10 +26,9 @@ func Register(c *fiber.Ctx) error {
 	user := new(model.User)
 
 	userName := helper.SanitizeInput(userCreateDto.UserName)
-	email := helper.SanitizeInput(userCreateDto.Email)
 
 	user.UserName = userName
-	user.Email = email
+	user.Email = userCreateDto.Email
 
 	if user.UserName == "" || user.Email == "" {
 		return c.Status(400).JSON(&fiber.Map{
@@ -78,15 +77,13 @@ func FetchCode(c *fiber.Ctx) error {
 		})
 	}
 
-	if dto.UserName != "john" {
-		fmt.Println("dto.UserName")
-		return c.SendStatus(fiber.StatusUnauthorized)
-	}
+	// TODO: Add actual code checking
 
 	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE email = $1", dto.Email)
 
 	if errFromDb != nil {
 		fmt.Println("errFromDb")
+		log.Println(errFromDb)
 		return c.SendStatus(fiber.StatusUnauthorized)
 	}
 
@@ -108,12 +105,13 @@ func FetchCode(c *fiber.Ctx) error {
 		}
 	}
 
+	log.Println("user")
+	log.Println(user)
 	signedTokenString, err := auth.GenerateJWT(user)
 
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	return c.JSON(fiber.Map{"token": signedTokenString})
-
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"token": signedTokenString})
 }

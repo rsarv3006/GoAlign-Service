@@ -33,6 +33,8 @@ func Connect() error {
 	CreateTeamTable()
 	CreateUserTeamMembershipTable()
 	CreateTeamSettingsTable()
+	CreateTaskTable()
+	CreateTaskEntryTable()
 
 	fmt.Println("Connection Opened to Database")
 	return nil

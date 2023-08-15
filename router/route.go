@@ -17,6 +17,8 @@ func SetupRoutes(app *fiber.App) {
 
 	setupAuthRoutes(api)
 	setUpTeamRoutes(api)
+	setUpTaskRoutes(api)
+	setUpTaskEntryRoutes(api)
 }
 
 func setupAuthRoutes(api fiber.Router) {
@@ -24,24 +26,44 @@ func setupAuthRoutes(api fiber.Router) {
 
 	auth.Post("/register", handler.Register)
 	// auth.Post("/login", handler.Login)
-	log.Println("setting up routes thing 2")
 	auth.Post("/code", handler.FetchCode)
-	auth.Get("/test", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World 👋!")
-	})
 }
 
 func setUpTeamRoutes(api fiber.Router) {
 	team := api.Group("/team", logger.New())
 
 	team.Use(logger.New())
-	log.Println("pre is expired")
 	team.Use(middleware.IsExpired())
 
-	log.Println("post is expired")
 	team.Post("/", handler.CreateTeam)
 	// team.Get("/", handler.GetAllTeams)
 	// team.Get("/:id", handler.GetTeam)
 	// team.Put("/:id", handler.UpdateTeam)
 	// team.Delete("/:id", handler.DeleteTeam)
+}
+
+func setUpTaskRoutes(api fiber.Router) {
+	task := api.Group("/task", logger.New())
+
+	task.Use(logger.New())
+	task.Use(middleware.IsExpired())
+
+	task.Post("/", handler.CreateTask)
+	// task.Get("/", handler.GetAllTasks)
+	// task.Get("/:id", handler.GetTask)
+	// task.Put("/:id", handler.UpdateTask)
+	// task.Delete("/:id", handler.DeleteTask)
+}
+
+func setUpTaskEntryRoutes(api fiber.Router) {
+	taskEntry := api.Group("/task-entry", logger.New())
+
+	taskEntry.Use(logger.New())
+	taskEntry.Use(middleware.IsExpired())
+
+	taskEntry.Post("/", handler.CreateTaskEntry)
+	// taskEntry.Get("/", handler.GetAllTaskEntrys)
+	// taskEntry.Get("/:id", handler.GetTaskEntry)
+	// taskEntry.Put("/:id", handler.UpdateTaskEntry)
+	// taskEntry.Delete("/:id", handler.DeleteTaskEntry)
 }

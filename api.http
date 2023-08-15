@@ -21,9 +21,43 @@ Content-Type: application/json
 ### create team
 POST http://localhost:3000/api/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiIwZGM4MjliZS02ZjcyLTQ3ZDQtYmZkMi1mNzVlMTE3MWQ3ZjEiLCJ1c2VyX25hbWUiOiJqb2huIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTE5NjQxODl9.ynZs8fa9zbhPtl5yw2chkrP2rRYOJuGuyg2kiJO2zjE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIwMzEzMTF9.h_hLlpmcstGK1Zj3vjsLxCSCZROGVF-zYnsr97Y41lI
 
 {
-  "team_name": "waffles"
+  "team_name": "waffles the og"
+}
+
+### TASK
+### create task
+POST http://localhost:3000/api/task/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIwMzEzMTF9.h_hLlpmcstGK1Zj3vjsLxCSCZROGVF-zYnsr97Y41lI
+
+{
+  "task_name": "waffles",
+  "notes": "waffles are good",
+  "required_completions_needed": 2,
+  "team_id": "1520b8a9-a91b-4c15-b3bd-c368e3c4e5f8",
+  "start_date": "2023-08-14T03:21:17Z",
+  "creator_id": "5a4833b5-1e6d-4d51-8e11-bc98ae054845",
+  "interval_between_windows_count": 1,
+  "interval_between_windows_unit": "day",
+  "window_duration_count": 1,
+  "window_duration_unit": "day",
+  "status": "active"
+}
+
+### TASK ENTRY
+### create task entry
+POST http://localhost:3000/api/task-entry/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIxMDg0MjZ9.ys3trqz4oiH4MVrS9v36me33SpkAa4A_XbzT2Zrb9f4
+
+{
+  "start_date": "2023-08-14T03:21:17Z",
+  "end_date": "2023-08-16T03:21:17Z",
+  "task_id": "3abffb91-8545-4499-b3a2-1e8978e0cd36",
+  "assigned_user_id": "5a4833b5-1e6d-4d51-8e11-bc98ae054845",
+  "notes": "meep"
 }
 
