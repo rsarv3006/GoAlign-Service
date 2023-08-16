@@ -3,10 +3,12 @@ package handler
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
+	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
@@ -34,7 +36,75 @@ func CreateTask(c *fiber.Ctx) error {
 		})
 	}
 
-	// TODO: Validate taskDto
+	taskName := helper.SanitizeInput(taskDto.TaskName)
+
+	if taskName == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Task name cannot be empty",
+			"success": false,
+		})
+	}
+
+	notes := ""
+	if taskDto.Notes != nil {
+		notes = helper.SanitizeInput(notes)
+	}
+
+	if taskDto.StartDate.Before(helper.GetToday()) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Start date cannot be in the past",
+			"success": false,
+		})
+	}
+
+	endDate := time.Time{}
+	if taskDto.EndDate != nil && taskDto.EndDate.Before(taskDto.StartDate) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "End date cannot be before start date",
+			"success": false,
+		})
+	} else if taskDto.EndDate != nil {
+		endDate = *taskDto.EndDate
+	}
+
+	requiredCompletionsNeeded := taskDto.RequiredCompletionsNeeded
+	if requiredCompletionsNeeded != nil && *requiredCompletionsNeeded < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Required completions needed cannot be negative",
+			"success": false,
+		})
+	}
+
+	if taskDto.IntervalBetweenWindowsCount < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Interval between windows count cannot be negative",
+			"success": false,
+		})
+	}
+
+	if taskDto.WindowDurationCount < 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Window duration count cannot be negative",
+			"success": false,
+		})
+	}
+
+	if !model.IsValidVariant(taskDto.IntervalBetweenWindowsUnit) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Interval between windows unit is invalid",
+			"success": false,
+		})
+	}
+
+	if !model.IsValidVariant(taskDto.WindowDurationUnit) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Window duration unit is invalid",
+			"success": false,
+		})
+	}
+
+	// TODO: Add validation for teamId
+	// TODO: Add validation for CreatorId
 
 	query := database.TaskCreateQuery
 	stmt, err := database.DB.Prepare(query)
@@ -51,9 +121,7 @@ func CreateTask(c *fiber.Ctx) error {
 
 	task := new(model.Task)
 
-	// TODO: Sanitize cuser inputs
-
-	rows, err := stmt.Query(taskDto.TaskName, taskDto.Notes, taskDto.StartDate, taskDto.EndDate, taskDto.RequiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
+	rows, err := stmt.Query(taskName, notes, taskDto.StartDate, endDate, requiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

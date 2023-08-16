@@ -31,19 +31,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task
 POST http://localhost:3000/api/task/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIwMzEzMTF9.h_hLlpmcstGK1Zj3vjsLxCSCZROGVF-zYnsr97Y41lI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIxNTUwNTB9.XG9BMnoCQry_h0kcSrvWPpF9axaakLC69t_aQUuDPTI
 
 {
   "task_name": "waffles",
   "notes": "waffles are good",
   "required_completions_needed": 2,
   "team_id": "1520b8a9-a91b-4c15-b3bd-c368e3c4e5f8",
-  "start_date": "2023-08-14T03:21:17Z",
+  "start_date": "2023-08-24T03:21:17Z",
   "creator_id": "5a4833b5-1e6d-4d51-8e11-bc98ae054845",
   "interval_between_windows_count": 1,
-  "interval_between_windows_unit": "day",
+  "interval_between_windows_unit": "day(s)",
   "window_duration_count": 1,
-  "window_duration_unit": "day",
+  "window_duration_unit": "day(s)",
   "status": "active"
 }
 
@@ -51,7 +51,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task entry
 POST http://localhost:3000/api/task-entry/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIxMDg0MjZ9.ys3trqz4oiH4MVrS9v36me33SpkAa4A_XbzT2Zrb9f4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIxNTUwNTB9.XG9BMnoCQry_h0kcSrvWPpF9axaakLC69t_aQUuDPTI
 
 {
   "start_date": "2023-08-14T03:21:17Z",
