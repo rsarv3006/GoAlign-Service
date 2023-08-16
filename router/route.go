@@ -36,7 +36,7 @@ func setUpTeamRoutes(api fiber.Router) {
 	team.Use(middleware.IsExpired())
 
 	team.Post("/", handler.CreateTeam)
-	// team.Get("/", handler.GetAllTeams)
+	team.Get("/", handler.GetTeamsForCurrentUser)
 	// team.Get("/:id", handler.GetTeam)
 	// team.Put("/:id", handler.UpdateTeam)
 	// team.Delete("/:id", handler.DeleteTeam)

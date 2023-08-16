@@ -5,12 +5,77 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
+
+func GetTeamsForCurrentUser(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		log.Error(err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	query := database.TeamGetByUserIdQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		log.Error(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	rows, err := stmt.Query(currentUser.UserId)
+
+	if err != nil {
+		log.Error(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	teams := make([]model.Team, 0)
+
+	for rows.Next() {
+		team := model.Team{}
+		err := rows.Scan(
+			&team.TeamId,
+			&team.TeamName,
+			&team.CreatorUserId,
+			&team.Status,
+			&team.TeamManagerId,
+			&team.CreatedAt,
+			&team.UpdatedAt,
+		)
+
+		if err != nil {
+			log.Error(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Internal Server Error",
+				"error":   err,
+			})
+		}
+
+		teams = append(teams, team)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Success",
+		"teams":   teams,
+	})
+}
 
 func CreateTeam(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
