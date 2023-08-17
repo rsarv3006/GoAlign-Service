@@ -147,6 +147,19 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 
 	userTeamMembership, err := CreateUserTeamMembership(currentUser.UserId, team.TeamId)
+
+	if err != nil {
+		return c.Status(500).JSON(&fiber.Map{
+			"success": false,
+			"message": err,
+		})
+	}
+
+	teamSettingsDto := new(model.TeamSettingsCreateDto)
+	teamSettingsDto.TeamId = team.TeamId
+	teamSettingsDto.CanAllMembersAddTasks = false
+	teamSettings, err := CreateTeamSettings(*teamSettingsDto)
+
 	if err != nil {
 		return c.Status(500).JSON(&fiber.Map{
 			"success": false,
@@ -155,10 +168,11 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(&fiber.Map{
-		"success": true,
-		"message": "Team created successfully",
-		"team":    team,
-		"members": userTeamMembership,
+		"success":  true,
+		"message":  "Team created successfully",
+		"team":     team,
+		"members":  userTeamMembership,
+		"settings": teamSettings,
 	})
 }
 
@@ -211,6 +225,15 @@ func DeleteTeam(c *fiber.Ctx) error {
 	if teamToDelete.TeamManagerId != currentUser.UserId {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	err = DeleteTeamSettingsByTeamId(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
 			"error":   err,
 		})
 	}

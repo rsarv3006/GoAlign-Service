@@ -57,7 +57,6 @@ func CreateTeamSettingsTable() {
     CREATE TABLE IF NOT EXISTS team_settings (
       team_settings_id UUID NOT NULL PRIMARY KEY default gen_random_uuid(),
       team_id UUID NOT NULL REFERENCES teams(team_id),
-      status VARCHAR(255) NOT NULL DEFAULT 'active',
       can_all_members_add_tasks BOOLEAN NOT NULL DEFAULT FALSE
     );
   `)
