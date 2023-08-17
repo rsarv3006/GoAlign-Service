@@ -15,3 +15,12 @@ const TeamGetByUserIdQueryString = `
     SELECT team_id FROM user_team_membership WHERE user_id = $1
   );
 `
+
+const TeamDeleteQueryString = `
+DELETE FROM teams
+WHERE team_id = $1;
+`
+
+const TeamGetByIdQueryString = `
+  SELECT * FROM teams WHERE team_id = $1;
+`

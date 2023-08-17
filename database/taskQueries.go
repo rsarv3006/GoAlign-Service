@@ -30,3 +30,8 @@ INSERT INTO tasks (
 )
 RETURNING *
 ;`
+
+const TaskDeleteByTeamIdQuery = `
+DELETE FROM tasks
+WHERE team_id = $1;
+`

@@ -12,3 +12,8 @@ VALUES (
   $1, $2, $3, $4, $5  
 );
 `
+
+const TaskEntryDeleteByTeamIdQuery = `
+DELETE FROM task_entries
+WHERE task_id IN (SELECT task_id FROM tasks WHERE team_id = $1);
+`

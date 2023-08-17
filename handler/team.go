@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
@@ -159,4 +160,172 @@ func CreateTeam(c *fiber.Ctx) error {
 		"team":    team,
 		"members": userTeamMembership,
 	})
+}
+
+func getTeamById(teamId uuid.UUID) (*model.Team, error) {
+	query := database.TeamGetByIdQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	team := new(model.Team)
+	err = stmt.QueryRow(teamId).Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return team, nil
+}
+
+func DeleteTeam(c *fiber.Ctx) error {
+	teamId, err := uuid.Parse(c.Params("id"))
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid team id",
+			"error":   err,
+		})
+	}
+
+	teamToDelete, err := getTeamById(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid team id",
+			"error":   err,
+		})
+	}
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	if teamToDelete.TeamManagerId != currentUser.UserId {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	err = deleteUserTeamMemberships(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	err = deleteTaskEntriesByTeamId(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	err = deleteTasksByTeamId(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	err = deleteTeam(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func deleteUserTeamMemberships(teamId uuid.UUID) error {
+	query := database.UserTeamMembershipDeleteByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
+	query := database.TaskEntryDeleteByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteTasksByTeamId(teamId uuid.UUID) error {
+	query := database.TaskDeleteByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteTeam(teamId uuid.UUID) error {
+	query := database.TeamDeleteQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

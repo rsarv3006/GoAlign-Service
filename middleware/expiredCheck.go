@@ -9,6 +9,13 @@ import (
 
 func IsExpired() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		if !strings.Contains(c.Get("Authorization"), "Bearer ") {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "Unauthorized",
+				"error":   "No token provided",
+			})
+		}
+
 		token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 		_, err := auth.ValidateToken(token)
 
