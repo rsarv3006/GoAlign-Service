@@ -352,3 +352,33 @@ func deleteTeam(teamId uuid.UUID) error {
 
 	return nil
 }
+
+func getTeamByTeamId(uuid.UUID) (*model.Team, error) {
+	query := database.TeamGetByIdQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	team := new(model.Team)
+	rows, err := stmt.Query(team.TeamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err = rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return team, nil
+}
+
+// TODO: Move delete functions into appropriate files

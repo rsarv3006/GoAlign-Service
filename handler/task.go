@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
@@ -148,4 +149,34 @@ func CreateTask(c *fiber.Ctx) error {
 		"task":    task,
 		"success": true,
 	})
+}
+
+func getTasksByTeamId(teamId uuid.UUID) ([]model.Task, error) {
+	query := database.TaskGetTasksByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tasks := []model.Task{}
+
+	for rows.Next() {
+		task := new(model.Task)
+		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, *task)
+	}
+
+	return tasks, nil
 }

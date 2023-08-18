@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
@@ -86,4 +87,37 @@ func CreateTaskEntry(c *fiber.Ctx) error {
 		"taskEntry": taskEntry,
 		"success":   true,
 	})
+}
+
+func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntry, error) {
+	query := database.TaskEntryGetByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	taskEntries := make([]model.TaskEntry, 0)
+
+	rows, err := stmt.Query(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		taskEntry := new(model.TaskEntry)
+
+		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskEntries = append(taskEntries, *taskEntry)
+	}
+
+	return taskEntries, nil
 }

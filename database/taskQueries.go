@@ -35,3 +35,8 @@ const TaskDeleteByTeamIdQuery = `
 DELETE FROM tasks
 WHERE team_id = $1;
 `
+
+const TaskGetTasksByTeamIdQuery = `
+SELECT * FROM tasks
+WHERE team_id = $1;
+`

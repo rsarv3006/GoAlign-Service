@@ -19,6 +19,7 @@ func SetupRoutes(app *fiber.App) {
 	setUpTeamRoutes(api)
 	setUpTaskRoutes(api)
 	setUpTaskEntryRoutes(api)
+	setUpStatsRoutes(api)
 }
 
 func setupAuthRoutes(api fiber.Router) {
@@ -66,4 +67,13 @@ func setUpTaskEntryRoutes(api fiber.Router) {
 	// taskEntry.Get("/:id", handler.GetTaskEntry)
 	// taskEntry.Put("/:id", handler.UpdateTaskEntry)
 	// taskEntry.Delete("/:id", handler.DeleteTaskEntry)
+}
+
+func setUpStatsRoutes(api fiber.Router) {
+	stats := api.Group("/stats", logger.New())
+
+	stats.Use(logger.New())
+	stats.Use(middleware.IsExpired())
+
+	stats.Get("/team/:teamId", handler.GetStatsByTeamIdEndpoint)
 }

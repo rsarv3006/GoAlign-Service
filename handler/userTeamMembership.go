@@ -39,3 +39,36 @@ func CreateUserTeamMembership(userId uuid.UUID, teamId uuid.UUID) (*model.UserTe
 
 	return userTeamMembership, nil
 }
+
+func getUserTeamMemberships(teamId uuid.UUID) ([]model.UserTeamMembership, error) {
+	query := database.UserTeamMembershipGetByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var users []model.UserTeamMembership
+
+	for rows.Next() {
+		userTeamMembership := new(model.UserTeamMembership)
+		err := rows.Scan(&userTeamMembership.UserTeamMembershipId, &userTeamMembership.UserId, &userTeamMembership.TeamId, &userTeamMembership.CreatedAt, &userTeamMembership.UpdatedAt, &userTeamMembership.Status)
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, *userTeamMembership)
+	}
+
+	return users, nil
+
+}

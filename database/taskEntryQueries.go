@@ -17,3 +17,8 @@ const TaskEntryDeleteByTeamIdQuery = `
 DELETE FROM task_entries
 WHERE task_id IN (SELECT task_id FROM tasks WHERE team_id = $1);
 `
+
+const TaskEntryGetByTeamIdQuery = `
+SELECT * FROM task_entries
+WHERE task_id IN (SELECT task_id FROM tasks WHERE team_id = $1);
+`
