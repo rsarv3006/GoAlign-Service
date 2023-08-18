@@ -15,3 +15,8 @@ const UserTeamMembershipGetByTeamIdQuery = `
 SELECT * FROM user_team_membership
 WHERE team_id = $1;
 `
+
+const UserTeamMembershipGetByUserIdAndTeamIdQuery = `
+SELECT * FROM user_team_membership
+WHERE user_id = $1 AND team_id = $2;
+`

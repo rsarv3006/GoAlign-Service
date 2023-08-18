@@ -72,3 +72,26 @@ func getUserTeamMemberships(teamId uuid.UUID) ([]model.UserTeamMembership, error
 	return users, nil
 
 }
+
+func isUserInTeam(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
+	query := database.UserTeamMembershipGetByUserIdAndTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return false, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(userId, teamId)
+
+	if err != nil {
+		return false, err
+	}
+
+	for rows.Next() {
+		return true, nil
+	}
+
+	return false, nil
+}

@@ -57,6 +57,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
   "status": "active"
 }
 
+### get tasks by current user
+GET http://localhost:3000/api/task/assignedToCurrentUser
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIzMzUwODB9.MYO8jO2IjWywEe4jVyGLLsO_YGedCeAtjJjGmAJpFHA
+
+### get tasks by team id
+GET http://localhost:3000/api/task/byTeam/07ae863f-714d-47c8-992a-f49b95667533
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIzMzUwODB9.MYO8jO2IjWywEe4jVyGLLsO_YGedCeAtjJjGmAJpFHA
+
 ### TASK ENTRY
 ### create task entry
 POST http://localhost:3000/api/task-entry/

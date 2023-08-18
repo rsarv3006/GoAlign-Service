@@ -151,6 +151,163 @@ func CreateTask(c *fiber.Ctx) error {
 	})
 }
 
+func GetTasksForUserEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	query := database.TaskGetTasksByAssignedUserIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		log.Println("MEEP")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(currentUser.UserId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	tasks := make([]*model.Task, 0)
+
+	for rows.Next() {
+		task := new(model.Task)
+		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+		if err != nil {
+			log.Println(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Internal Server Error",
+				"error":   err,
+				"success": false,
+			})
+		}
+		tasks = append(tasks, task)
+	}
+
+	taskEntryQuery := database.TaskEntryGetByAssignedUserIdQuery
+	taskEntryStmt, err := database.DB.Prepare(taskEntryQuery)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	defer taskEntryStmt.Close()
+
+	taskEntries := make([]*model.TaskEntry, 0)
+
+	rows, err = taskEntryStmt.Query(currentUser.UserId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	for rows.Next() {
+		taskEntry := new(model.TaskEntry)
+
+		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
+
+		if err != nil {
+			log.Println(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Internal Server Error",
+				"error":   err,
+				"success": false,
+			})
+		}
+		taskEntries = append(taskEntries, taskEntry)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":     "Tasks retrieved successfully",
+		"tasks":       tasks,
+		"taskEntries": taskEntries,
+		"success":     true,
+	})
+}
+
+func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	teamId, err := uuid.Parse(c.Params("teamId"))
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Bad Request",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	isUserInTeam, err := isUserInTeam(currentUser.UserId, teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	if !isUserInTeam {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Forbidden",
+			"success": false,
+		})
+	}
+
+	tasks, err := getTasksByTeamId(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Tasks retrieved successfully",
+		"tasks":   tasks,
+		"success": true,
+	})
+}
+
 func getTasksByTeamId(teamId uuid.UUID) ([]model.Task, error) {
 	query := database.TaskGetTasksByTeamIdQuery
 	stmt, err := database.DB.Prepare(query)

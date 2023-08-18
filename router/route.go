@@ -50,8 +50,8 @@ func setUpTaskRoutes(api fiber.Router) {
 	task.Use(middleware.IsExpired())
 
 	task.Post("/", handler.CreateTask)
-	// task.Get("/", handler.GetAllTasks)
-	// task.Get("/:id", handler.GetTask)
+	task.Get("/assignedToCurrentUser", handler.GetTasksForUserEndpoint)
+	task.Get("/byTeam/:teamId", handler.GetTasksByTeamIdEndpoint)
 	// task.Put("/:id", handler.UpdateTask)
 	// task.Delete("/:id", handler.DeleteTask)
 }

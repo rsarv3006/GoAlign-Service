@@ -89,16 +89,16 @@ func CreateTeam(c *fiber.Ctx) error {
 		})
 	}
 
-	teamdto := new(model.TeamCreateDto)
+	teamDto := new(model.TeamCreateDto)
 
-	if err := c.BodyParser(teamdto); err != nil {
+	if err := c.BodyParser(teamDto); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": err,
 		})
 	}
 
-	if teamdto.TeamName == "" {
+	if teamDto.TeamName == "" {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
 			"message": "Team name is required",
@@ -123,7 +123,7 @@ func CreateTeam(c *fiber.Ctx) error {
 
 	team := new(model.Team)
 
-	cleanedTeamName := helper.SanitizeInput(teamdto.TeamName)
+	cleanedTeamName := helper.SanitizeInput(teamDto.TeamName)
 	rows, err := stmt.Query(cleanedTeamName, currentUser.UserId, currentUser.UserId)
 
 	if err != nil {

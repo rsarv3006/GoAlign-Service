@@ -40,3 +40,11 @@ const TaskGetTasksByTeamIdQuery = `
 SELECT * FROM tasks
 WHERE team_id = $1;
 `
+
+const TaskGetTasksByAssignedUserIdQuery = `
+SELECT * FROM tasks
+WHERE task_id IN (
+  SELECT task_id FROM task_entries
+  WHERE assigned_user_id = $1
+);
+`
