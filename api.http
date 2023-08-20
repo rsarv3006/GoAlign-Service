@@ -17,6 +17,24 @@ Content-Type: application/json
   "user_name": "john"
 }
 
+### other test user
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "user_name": "ilikewaffles",
+  "email": "waffles@aredelicious.foodie"
+}
+
+### fetch code
+POST http://localhost:3000/api/auth/code
+Content-Type: application/json
+
+{
+  "email": "waffles@aredelicious.foodie",
+  "user_name": "john"
+}
+
 ### TEAM
 ### get teams by current user
 GET http://localhost:3000/api/team/
@@ -86,3 +104,31 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 GET http://localhost:3000/api/stats/team/07ae863f-714d-47c8-992a-f49b95667533
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIzMjc5NDF9.crkhgcHTewPIZAP0ONgPF_PsdWj-4-zjRTFOoeiWIoc
+
+### TEAM INVITES
+### create team invite
+POST http://localhost:3000/api/team-invite/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTI0OTgwMDh9.aYBK5e8pCWCTgjqEgh7_U-KXn6Nruw8Y9loPcH7Trao
+
+{
+  "team_id": "9ba86816-2413-40d3-8552-0204d1492feb",
+  "email": "waffles@aredelicious.foodie"
+}
+
+### get team invites by current user
+GET http://localhost:3000/api/team-invite/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJlMDgwNDkxNS0zYjNjLTQ3MzItYTgwNS05OGIxYjI1YzM1NzAiLCJ1c2VyX25hbWUiOiJpbGlrZXdhZmZsZXMiLCJlbWFpbCI6IndhZmZsZXNAYXJlZGVsaWNpb3VzLmZvb2RpZSIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfSwiZXhwIjoxNjkyNDk4NTM1fQ.Mj4j4msYX3S4b12-wGlr3Enk4wrxMXm-lbd2qQ6jQSU
+
+
+### accept team invite
+POST http://localhost:3000/api/team-invite/accept/bee02df3-d67d-4259-b4e1-66060257cd61
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJlMDgwNDkxNS0zYjNjLTQ3MzItYTgwNS05OGIxYjI1YzM1NzAiLCJ1c2VyX25hbWUiOiJpbGlrZXdhZmZsZXMiLCJlbWFpbCI6IndhZmZsZXNAYXJlZGVsaWNpb3VzLmZvb2RpZSIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfSwiZXhwIjoxNjkyNDk4NTM1fQ.Mj4j4msYX3S4b12-wGlr3Enk4wrxMXm-lbd2qQ6jQSU
+
+### decline team invite
+POST http://localhost:3000/api/team-invite/decline/3aee4482-f0ea-4d86-b7de-fe05cfb87c57
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJlMDgwNDkxNS0zYjNjLTQ3MzItYTgwNS05OGIxYjI1YzM1NzAiLCJ1c2VyX25hbWUiOiJpbGlrZXdhZmZsZXMiLCJlbWFpbCI6IndhZmZsZXNAYXJlZGVsaWNpb3VzLmZvb2RpZSIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfSwiZXhwIjoxNjkyNDk4NTM1fQ.Mj4j4msYX3S4b12-wGlr3Enk4wrxMXm-lbd2qQ6jQSU
+

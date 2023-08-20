@@ -20,6 +20,7 @@ func SetupRoutes(app *fiber.App) {
 	setUpTaskRoutes(api)
 	setUpTaskEntryRoutes(api)
 	setUpStatsRoutes(api)
+	setUpTeamInviteRoutes(api)
 }
 
 func setupAuthRoutes(api fiber.Router) {
@@ -76,4 +77,15 @@ func setUpStatsRoutes(api fiber.Router) {
 	stats.Use(middleware.IsExpired())
 
 	stats.Get("/team/:teamId", handler.GetStatsByTeamIdEndpoint)
+}
+
+func setUpTeamInviteRoutes(api fiber.Router) {
+	teamInvites := api.Group("/team-invite", logger.New())
+
+	teamInvites.Use(middleware.IsExpired())
+
+	teamInvites.Post("/", handler.CreateTeamInviteEndpoint)
+	teamInvites.Get("/", handler.GetTeamInvitesForCurrentUserEndpoint)
+	teamInvites.Post("/accept/:teamInviteId", handler.AcceptTeamInviteEndpoint)
+	teamInvites.Post("/decline/:teamInviteId", handler.DeclineTeamInviteEndpoint)
 }

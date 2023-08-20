@@ -112,3 +112,21 @@ func CreateTaskEntryTable() {
 		panic(err)
 	}
 }
+
+func CreateTeamInviteTable() {
+	log.Println("Creating team_invites table")
+	_, err := DB.Query(`
+  CREATE TABLE IF NOT EXISTS team_invites (
+  team_invite_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id uuid NOT NULL REFERENCES teams(team_id),
+  email varchar(100) NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT NOW(),
+  updated_at timestamptz NOT NULL DEFAULT NOW(),
+  status varchar(50) NOT NULL DEFAULT 'pending',
+  invite_creator_id uuid NOT NULL REFERENCES users(user_id)
+);`)
+
+	if err != nil {
+		panic(err)
+	}
+}
