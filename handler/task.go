@@ -337,3 +337,22 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.Task, error) {
 
 	return tasks, nil
 }
+
+func deleteTasksByTeamId(teamId uuid.UUID) error {
+	query := database.TaskDeleteByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

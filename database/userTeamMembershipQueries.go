@@ -11,6 +11,11 @@ DELETE FROM user_team_membership
 WHERE team_id = $1;
 `
 
+const UserTeamMembershipDeleteByUserIdQuery = `
+DELETE FROM user_team_membership
+WHERE user_id = $1;
+`
+
 const UserTeamMembershipGetByTeamIdQuery = `
 SELECT * FROM user_team_membership
 WHERE team_id = $1;

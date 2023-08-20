@@ -24,3 +24,7 @@ WHERE team_id = $1;
 const TeamGetByIdQueryString = `
   SELECT * FROM teams WHERE team_id = $1;
 `
+
+const TeamGetByTeamManagerIdQueryString = `
+  SELECT * FROM teams WHERE team_manager_id = $1;
+`

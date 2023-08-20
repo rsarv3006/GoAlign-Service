@@ -95,3 +95,41 @@ func isUserInTeam(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
 
 	return false, nil
 }
+
+func deleteUserTeamMembershipsByTeamId(teamId uuid.UUID) error {
+	query := database.UserTeamMembershipDeleteByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteUserTeamMembershipsByUserId(userId uuid.UUID) error {
+	query := database.UserTeamMembershipDeleteByUserIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(userId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

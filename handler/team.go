@@ -238,7 +238,7 @@ func DeleteTeam(c *fiber.Ctx) error {
 		})
 	}
 
-	err = deleteUserTeamMemberships(teamId)
+	err = deleteUserTeamMembershipsByTeamId(teamId)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -277,46 +277,8 @@ func DeleteTeam(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func deleteUserTeamMemberships(teamId uuid.UUID) error {
-	query := database.UserTeamMembershipDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
 	query := database.TaskEntryDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func deleteTasksByTeamId(teamId uuid.UUID) error {
-	query := database.TaskDeleteByTeamIdQuery
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
@@ -381,4 +343,25 @@ func getTeamByTeamId(uuid.UUID) (*model.Team, error) {
 	return team, nil
 }
 
-// TODO: Move delete functions into appropriate files
+func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
+	query := database.TeamGetByTeamManagerIdQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return false
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(userId)
+
+	if err != nil {
+		return false
+	}
+
+	for rows.Next() {
+		return true
+	}
+
+	return false
+}
