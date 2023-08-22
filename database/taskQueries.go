@@ -48,3 +48,8 @@ WHERE task_id IN (
   WHERE assigned_user_id = $1
 );
 `
+
+const TaskGetTaskByTaskIdQuery = `
+SELECT * FROM tasks
+WHERE task_id = $1;
+`

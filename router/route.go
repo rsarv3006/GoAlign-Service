@@ -54,6 +54,7 @@ func setUpTaskRoutes(api fiber.Router) {
 	task.Post("/", handler.CreateTask)
 	task.Get("/assignedToCurrentUser", handler.GetTasksForUserEndpoint)
 	task.Get("/byTeam/:teamId", handler.GetTasksByTeamIdEndpoint)
+	task.Get("/:taskId", handler.GetTaskEndpoint)
 	// task.Put("/:id", handler.UpdateTask)
 	// task.Delete("/:id", handler.DeleteTask)
 }

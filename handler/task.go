@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"log"
 	"strings"
 	"time"
@@ -355,4 +356,87 @@ func deleteTasksByTeamId(teamId uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func GetTaskEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	taskId, err := uuid.Parse(c.Params("taskId"))
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Bad Request",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	task, err := getTaskByTaskId(taskId)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"message": "Task not found",
+				"success": false,
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	isUserInTeam, err := isUserInTeam(currentUser.UserId, task.TeamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	if !isUserInTeam {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Forbidden",
+			"success": false,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Task retrieved successfully",
+		"task":    task,
+		"success": true,
+	})
+}
+
+func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
+	query := database.TaskGetTaskByTaskIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	task := new(model.Task)
+	err = stmt.QueryRow(taskId).Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
 }
