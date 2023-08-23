@@ -410,3 +410,64 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
+
+func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	_, err := auth.ValidateToken(token)
+
+	// TODO: Check if user can view team invites for this team
+
+	if err != nil {
+		log.Error(err)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	teamId := c.Params("teamId")
+
+	query := database.TeamInviteGetByTeamIdQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		log.Error(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	rows, err := stmt.Query(teamId)
+
+	if err != nil {
+		log.Error(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+		})
+	}
+
+	teamInvites := make([]model.TeamInvite, 0)
+
+	for rows.Next() {
+		var teamInvite model.TeamInvite
+		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
+
+		if err != nil {
+			log.Error(err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Internal Server Error",
+				"error":   err,
+			})
+		}
+
+		teamInvites = append(teamInvites, teamInvite)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":      "success",
+		"message":     "Team invites by team id",
+		"teamInvites": teamInvites,
+	})
+}

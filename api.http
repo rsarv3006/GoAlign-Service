@@ -142,6 +142,11 @@ DELETE http://localhost:3000/api/team-invite/ebd43211-91b0-438d-9377-61502a74bcd
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjZmE2MWVhZC0zZDkxLTRjZTctOTcxZC1kNGM0NzkwMjVhZWIiLCJ1c2VyX25hbWUiOiJpbGlrZXdhZmZsZXMiLCJlbWFpbCI6IndhZmZsZXNAYXJlZGVsaWNpb3VzLmZvb2RpZSIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfSwiZXhwIjoxNjkyNzYxMTI3fQ.xURT0RcdTzhlqDGyImzxtxpFhBgMq4qHw0CDTAJNp9E
 
+### get team invites by team
+GET http://localhost:3000/api/team-invite/byTeam/9ba86816-2413-40d3-8552-0204d1492feb
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTI3NjE3MjV9.jWasbj7RMbbXQfgphxqHflGaBb4KF-O0CjfTPD9fsXo
+
 ### USER
 ### delete user
 DELETE http://localhost:3000/api/user/
