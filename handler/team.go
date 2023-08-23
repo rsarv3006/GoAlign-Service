@@ -365,3 +365,54 @@ func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
 
 	return false
 }
+
+func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	teamId, err := uuid.Parse(c.Params("teamId"))
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid team id",
+			"error":   err,
+		})
+	}
+
+	team, err := getTeamById(teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid team id",
+			"error":   err,
+		})
+	}
+
+	isUserInTeam, err := isUserInTeam(currentUser.UserId, teamId)
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "User is not in team",
+			"error":   err,
+		})
+	}
+
+	if !isUserInTeam {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+		})
+	}
+
+	return c.Status(200).JSON(&fiber.Map{
+		"success": true,
+		"team":    team,
+	})
+}
