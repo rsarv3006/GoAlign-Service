@@ -109,5 +109,5 @@ func setUpLoggingRoutes(api fiber.Router) {
 	log.Use(logger.New())
 	log.Use(middleware.IsExpired())
 
-	// log.Post("/", handler.LogEndpoint)
+	log.Post("/", handler.LogEventEndpoint)
 }

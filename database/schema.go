@@ -130,3 +130,20 @@ func CreateTeamInviteTable() {
 		panic(err)
 	}
 }
+
+func CreateAppLogsTable() {
+	log.Println("Creating app_logs table")
+	_, err := DB.Query(`
+  CREATE TABLE IF NOT EXISTS app_logs (
+  app_log_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+  log_message text NOT NULL,
+  log_level varchar(50) NOT NULL,
+  log_date timestamptz NOT NULL DEFAULT NOW(),
+  log_data jsonb,
+  user_id uuid 
+);`)
+
+	if err != nil {
+		panic(err)
+	}
+}
