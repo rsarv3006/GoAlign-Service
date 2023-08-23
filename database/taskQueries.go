@@ -53,3 +53,8 @@ const TaskGetTaskByTaskIdQuery = `
 SELECT * FROM tasks
 WHERE task_id = $1;
 `
+
+const TaskDeleteByTaskIdQuery = `
+DELETE FROM tasks
+WHERE task_id = $1;
+`

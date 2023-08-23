@@ -28,3 +28,7 @@ const TeamGetByIdQueryString = `
 const TeamGetByTeamManagerIdQueryString = `
   SELECT * FROM teams WHERE team_manager_id = $1;
 `
+
+const TeamGetByTeamIdAndManagerIdQuery = `
+ select team_manager_id from teams where team_id = $1 and team_manager_id = $2;
+`

@@ -60,7 +60,7 @@ func setUpTaskRoutes(api fiber.Router) {
 	task.Get("/:taskId", handler.GetTaskEndpoint)
 	// task.Put("/:id", handler.UpdateTask)
 	// task.Post("/markTaskComplete/:taskId", handler.MarkTaskCompleteEndpoint)
-	// task.Delete("/:id", handler.DeleteTask)
+	task.Delete("/:taskId", handler.DeleteTaskByTaskIdEndpoint)
 }
 
 func setUpTaskEntryRoutes(api fiber.Router) {

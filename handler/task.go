@@ -358,6 +358,119 @@ func deleteTasksByTeamId(teamId uuid.UUID) error {
 	return nil
 }
 
+func isUserTheTeamManager(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
+	query := database.TeamGetByTeamIdAndManagerIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return false, err
+	}
+
+	defer stmt.Close()
+
+	var managerId uuid.UUID
+
+	err = stmt.QueryRow(teamId, userId).Scan(&managerId)
+
+	if err != nil {
+		return false, err
+	}
+
+	return managerId == userId, nil
+}
+
+func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	taskId, err := uuid.Parse(c.Params("taskId"))
+
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Bad Request",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	task, err := getTaskByTaskId(taskId)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"message": "Task not found",
+				"error":   err,
+				"success": false,
+			})
+		}
+		log.Println(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	isUserTheTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
+
+	if err != nil {
+		log.Println(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	if !isUserTheTeamManager {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Forbidden",
+			"success": false,
+		})
+	}
+
+	err = deleteTaskByTaskId(taskId)
+
+	if err != nil {
+		log.Println(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Internal Server Error",
+			"error":   err,
+			"success": false,
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+
+}
+
+func deleteTaskByTaskId(taskId uuid.UUID) error {
+	query := database.TaskDeleteByTaskIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func GetTaskEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
