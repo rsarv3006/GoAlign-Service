@@ -91,7 +91,7 @@ func setUpTeamInviteRoutes(api fiber.Router) {
 	teamInvites.Post("/accept/:teamInviteId", handler.AcceptTeamInviteEndpoint)
 	teamInvites.Post("/decline/:teamInviteId", handler.DeclineTeamInviteEndpoint)
 	// teamInvites.Get("/byTeam/:teamId", handler.GetTeamInvitesByTeamIdEndpoint)
-	// teamInvites.Delete("/:id", handler.DeleteTeamInviteEndpoint)
+	teamInvites.Delete("/:teamInviteId", handler.DeleteTeamInviteEndpoint)
 }
 
 func setUpUserRoutes(api fiber.Router) {
@@ -108,6 +108,6 @@ func setUpLoggingRoutes(api fiber.Router) {
 
 	log.Use(logger.New())
 	log.Use(middleware.IsExpired())
-
+	// TODO: implement logging for all errors in all handlers
 	log.Post("/", handler.LogEventEndpoint)
 }

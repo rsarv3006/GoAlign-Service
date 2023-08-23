@@ -37,3 +37,9 @@ SET status = 'declined'
 WHERE team_invite_id = $1
 ;
 `
+
+const TeamInviteDeleteQueryString = `
+DELETE FROM team_invites
+WHERE team_invite_id = $1
+;
+`
