@@ -20,10 +20,7 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	query := database.TeamGetByUserIdQueryString
@@ -31,20 +28,14 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	rows, err := stmt.Query(currentUser.UserId)
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teams := make([]model.Team, 0)
@@ -63,10 +54,7 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 
 		if err != nil {
 			log.Error(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 
 		teams = append(teams, team)
@@ -83,26 +71,17 @@ func CreateTeam(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	teamDto := new(model.TeamCreateDto)
 
 	if err := c.BodyParser(teamDto); err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
+		return sendBadRequestResponse(c, err, "Unable to parse team create dto")
 	}
 
 	if teamDto.TeamName == "" {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": "Team name is required",
-		})
+		return sendBadRequestResponse(c, err, "Team name is required")
 	}
 
 	query := database.TeamCreateQueryString
@@ -115,9 +94,9 @@ func CreateTeam(c *fiber.Ctx) error {
 
 		default:
 			fmt.Println("Unknown error:", e)
-
 		}
-		return c.SendStatus(fiber.StatusInternalServerError)
+
+		return sendInternalServerErrorResponse(c, err)
 	}
 	defer stmt.Close()
 
@@ -135,7 +114,7 @@ func CreateTeam(c *fiber.Ctx) error {
 			fmt.Println("Unknown error:", e)
 
 		}
-		return c.SendStatus(fiber.StatusBadRequest)
+		return sendBadRequestResponse(c, err, "")
 	}
 
 	for rows.Next() {
@@ -149,10 +128,7 @@ func CreateTeam(c *fiber.Ctx) error {
 	userTeamMembership, err := CreateUserTeamMembership(currentUser.UserId, team.TeamId)
 
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamSettingsDto := new(model.TeamSettingsCreateDto)
@@ -161,10 +137,7 @@ func CreateTeam(c *fiber.Ctx) error {
 	teamSettings, err := CreateTeamSettings(*teamSettingsDto)
 
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.Status(201).JSON(&fiber.Map{
@@ -198,102 +171,57 @@ func DeleteTeam(c *fiber.Ctx) error {
 	teamId, err := uuid.Parse(c.Params("id"))
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid team id",
-			"error":   err,
-		})
+		return sendBadRequestResponse(c, err, "Invalid team id")
 	}
 
 	teamToDelete, err := getTeamById(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid team id",
-			"error":   err,
-		})
+		return sendBadRequestResponse(c, err, "Invalid team id")
 	}
+
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	if teamToDelete.TeamManagerId != currentUser.UserId {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	err = DeleteTeamSettingsByTeamId(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	err = deleteUserTeamMembershipsByTeamId(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	err = deleteTaskEntriesByTeamId(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	err = deleteTasksByTeamId(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	err = deleteTeam(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
-}
-
-func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
-	query := database.TaskEntryDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func deleteTeam(teamId uuid.UUID) error {
@@ -371,44 +299,29 @@ func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid team id",
-			"error":   err,
-		})
+		return sendBadRequestResponse(c, err, "Invalid team id")
 	}
 
 	team, err := getTeamById(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid team id",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	isUserInTeam, err := isUserInTeam(currentUser.UserId, teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "User is not in team",
-			"error":   err,
-		})
+		return sendBadRequestResponse(c, err, "User is not in team")
 	}
 
 	if !isUserInTeam {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	return c.Status(200).JSON(&fiber.Map{

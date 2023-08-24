@@ -64,3 +64,5 @@ func logEvent(logCreateDto *model.LogCreateDto, userId uuid.UUID) error {
 
 	return nil
 }
+
+// TODO: Create func to handle just an error message for internal logging

@@ -43,11 +43,7 @@ func CreateTaskEntry(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	defer stmt.Close()
@@ -63,22 +59,14 @@ func CreateTaskEntry(c *fiber.Ctx) error {
 	)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
 		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
 
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-				"success": false,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 	}
 
@@ -120,4 +108,23 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntry, error) {
 	}
 
 	return taskEntries, nil
+}
+
+func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
+	query := database.TaskEntryDeleteByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

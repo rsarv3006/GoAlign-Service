@@ -16,6 +16,7 @@ import (
 
 func Register(c *fiber.Ctx) error {
 	userCreateDto := new(model.UserCreateDto)
+
 	if err := c.BodyParser(userCreateDto); err != nil {
 		return c.Status(400).JSON(&fiber.Map{
 			"success": false,
