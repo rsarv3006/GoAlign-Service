@@ -16,30 +16,21 @@ func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-		})
+		return sendBadRequestResponse(c, err, "Error parsing teamId")
 	}
 
 	teamMembers, err := getUserTeamMemberships(teamId)
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	var isMember = false
@@ -51,20 +42,14 @@ func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
 	}
 
 	if !isMember {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	statsReturnDto, err := getStatsByTeamId(teamId)
 
 	if err != nil {
 		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
