@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"strings"
 	"time"
@@ -19,32 +20,21 @@ func CreateTask(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-			"success": false,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	taskDto := new(model.TaskCreateDto)
 
 	if err := c.BodyParser(taskDto); err != nil {
 		log.Println(err)
-		log.Println("Error parsing body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-			"success": false,
-		})
+		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
 	taskName := helper.SanitizeInput(taskDto.TaskName)
 
 	if taskName == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Task name cannot be empty",
-			"success": false,
-		})
+		err := errors.New("Task name cannot be empty")
+		return sendBadRequestResponse(c, err, "Task name cannot be empty")
 	}
 
 	notes := ""
@@ -53,56 +43,42 @@ func CreateTask(c *fiber.Ctx) error {
 	}
 
 	if taskDto.StartDate.Before(helper.GetToday()) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Start date cannot be in the past",
-			"success": false,
-		})
+		err := errors.New("Start date cannot be in the past")
+		return sendBadRequestResponse(c, err, "Start date cannot be in the past")
 	}
 
 	endDate := time.Time{}
 	if taskDto.EndDate != nil && taskDto.EndDate.Before(taskDto.StartDate) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "End date cannot be before start date",
-			"success": false,
-		})
+		err := errors.New("End date cannot be before start date")
+		return sendBadRequestResponse(c, err, "End date cannot be before start date")
 	} else if taskDto.EndDate != nil {
 		endDate = *taskDto.EndDate
 	}
 
 	requiredCompletionsNeeded := taskDto.RequiredCompletionsNeeded
 	if requiredCompletionsNeeded != nil && *requiredCompletionsNeeded < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Required completions needed cannot be negative",
-			"success": false,
-		})
+		err := errors.New("Required completions needed cannot be negative")
+		return sendBadRequestResponse(c, err, "Required completions needed cannot be negative")
 	}
 
 	if taskDto.IntervalBetweenWindowsCount < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Interval between windows count cannot be negative",
-			"success": false,
-		})
+		err := errors.New("Interval between windows count cannot be negative")
+		return sendBadRequestResponse(c, err, "Interval between windows count cannot be negative")
 	}
 
 	if taskDto.WindowDurationCount < 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Window duration count cannot be negative",
-			"success": false,
-		})
+		err := errors.New("Window duration count cannot be negative")
+		return sendBadRequestResponse(c, err, "Window duration count cannot be negative")
 	}
 
 	if !model.IsValidVariant(taskDto.IntervalBetweenWindowsUnit) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Interval between windows unit is invalid",
-			"success": false,
-		})
+		err := errors.New("Interval between windows unit is invalid")
+		return sendBadRequestResponse(c, err, "Interval between windows unit is invalid")
 	}
 
 	if !model.IsValidVariant(taskDto.WindowDurationUnit) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Window duration unit is invalid",
-			"success": false,
-		})
+		err := errors.New("Window duration unit is invalid")
+		return sendBadRequestResponse(c, err, "Window duration unit is invalid")
 	}
 
 	// TODO: Add validation for teamId
@@ -112,11 +88,8 @@ func CreateTask(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	defer stmt.Close()
@@ -126,22 +99,15 @@ func CreateTask(c *fiber.Ctx) error {
 	rows, err := stmt.Query(taskName, notes, taskDto.StartDate, endDate, requiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
 		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
 		if err != nil {
 			log.Println(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-				"success": false,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 	}
 
@@ -157,23 +123,15 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-			"success": false,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	query := database.TaskGetTasksByAssignedUserIdQuery
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Println("MEEP")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	defer stmt.Close()
@@ -181,11 +139,8 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	rows, err := stmt.Query(currentUser.UserId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	tasks := make([]*model.Task, 0)
@@ -195,11 +150,7 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
 		if err != nil {
 			log.Println(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-				"success": false,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 		tasks = append(tasks, task)
 	}
@@ -208,11 +159,8 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	taskEntryStmt, err := database.DB.Prepare(taskEntryQuery)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	defer taskEntryStmt.Close()
@@ -222,11 +170,8 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	rows, err = taskEntryStmt.Query(currentUser.UserId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
@@ -236,11 +181,7 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 
 		if err != nil {
 			log.Println(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-				"success": false,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 		taskEntries = append(taskEntries, taskEntry)
 	}
@@ -258,31 +199,19 @@ func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-			"success": false,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-			"success": false,
-		})
+		return sendBadRequestResponse(c, err, "Invalid teamId")
 	}
 
 	isUserInTeam, err := isUserInTeam(currentUser.UserId, teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	if !isUserInTeam {
@@ -295,11 +224,7 @@ func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 	tasks, err := getTasksByTeamId(teamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -384,21 +309,13 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-			"success": false,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	taskId, err := uuid.Parse(c.Params("taskId"))
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-			"success": false,
-		})
+		return sendBadRequestResponse(c, err, "error parsing taskId")
 	}
 
 	task, err := getTaskByTaskId(taskId)
@@ -411,23 +328,16 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 				"success": false,
 			})
 		}
+
 		log.Println(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	isUserTheTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
 
 	if err != nil {
 		log.Println(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	if !isUserTheTeamManager {
@@ -441,11 +351,7 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 
 	if err != nil {
 		log.Println(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -476,21 +382,14 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-			"success": false,
-		})
+		log.Println(err)
+		return sendUnauthorizedResponse(c)
 	}
 
 	taskId, err := uuid.Parse(c.Params("taskId"))
 
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-			"success": false,
-		})
+		return sendBadRequestResponse(c, err, "error parsing taskId")
 	}
 
 	task, err := getTaskByTaskId(taskId)
@@ -503,21 +402,13 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 			})
 		}
 
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	isUserInTeam, err := isUserInTeam(currentUser.UserId, task.TeamId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-			"success": false,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	if !isUserInTeam {
