@@ -18,10 +18,7 @@ func Register(c *fiber.Ctx) error {
 	userCreateDto := new(model.UserCreateDto)
 
 	if err := c.BodyParser(userCreateDto); err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
+		return sendBadRequestResponse(c, err, "Invalid request body")
 	}
 
 	user := new(model.User)
@@ -32,10 +29,8 @@ func Register(c *fiber.Ctx) error {
 	user.Email = userCreateDto.Email
 
 	if user.UserName == "" || user.Email == "" {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": "Username and Email are required",
-		})
+		err := fmt.Errorf("Username and Email are required")
+		return sendBadRequestResponse(c, err, "Username and Email are required")
 	}
 
 	user.UserId = uuid.New()
@@ -48,12 +43,9 @@ func Register(c *fiber.Ctx) error {
 		user.IsActive); err != nil {
 		log.Println(err)
 		if strings.Contains(err.Error(), `"users_email_key"`) {
-			return c.Status(400).JSON(&fiber.Map{
-				"success": false,
-				"message": "Email already exists",
-			})
+			return sendBadRequestResponse(c, err, "Email already exists")
 		}
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.JSON(&fiber.Map{
@@ -70,10 +62,7 @@ func Login(c *fiber.Ctx) {
 func FetchCode(c *fiber.Ctx) error {
 	dto := new(model.User)
 	if err := c.BodyParser(dto); err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"success": false,
-			"message": err,
-		})
+		return sendBadRequestResponse(c, err, "Invalid request body")
 	}
 
 	// TODO: Add actual code checking
@@ -82,7 +71,7 @@ func FetchCode(c *fiber.Ctx) error {
 
 	if errFromDb != nil {
 		log.Println(errFromDb)
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return sendUnauthorizedResponse(c)
 	}
 
 	defer userFromDb.Close()
@@ -93,25 +82,23 @@ func FetchCode(c *fiber.Ctx) error {
 		switch err := userFromDb.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified); err {
 		case sql.ErrNoRows:
 			fmt.Println("sql.ErrNoRows")
-			return c.SendStatus(fiber.StatusUnauthorized)
+			return sendUnauthorizedResponse(c)
 		case nil:
 			// Expected outcome, user found
 		default:
 			fmt.Println(err)
-			fmt.Println("default error thing")
-			return c.SendStatus(fiber.StatusUnauthorized)
+			return sendUnauthorizedResponse(c)
 		}
 	}
 
 	if !isUserObjectNotNil(&user) {
-		log.Println("User not found")
-		return c.SendStatus(fiber.StatusUnauthorized)
+		return sendUnauthorizedResponse(c)
 	}
 
 	signedTokenString, err := auth.GenerateJWT(user)
 
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"token": signedTokenString})
