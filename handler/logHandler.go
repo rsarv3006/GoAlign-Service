@@ -16,26 +16,20 @@ func LogEventEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	logCreateDto := new(model.LogCreateDto)
 	if err := c.BodyParser(logCreateDto); err != nil {
 		log.Println(err)
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-		})
+		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
 	err = logEvent(logCreateDto, currentUser.UserId)
 
 	if err != nil {
 		log.Println(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.SendStatus(fiber.StatusCreated)
