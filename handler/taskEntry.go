@@ -16,26 +16,16 @@ func CreateTaskEntry(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-			"success": false,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	taskEntryDto := new(model.TaskEntryCreateDto)
 
 	if err := c.BodyParser(taskEntryDto); err != nil {
-		log.Println(err)
-		log.Println("Error parsing body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-			"success": false,
-		})
+		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
-	// : TODO: Validate taskEntryDto
+	// TODO: Validate taskEntryDto
 	// TODO: Validate current users permissions to create task entry
 	log.Println(currentUser.UserName)
 
