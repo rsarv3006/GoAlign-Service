@@ -59,7 +59,6 @@ func setUpTaskRoutes(api fiber.Router) {
 	task.Get("/byTeam/:teamId", handler.GetTasksByTeamIdEndpoint)
 	task.Get("/:taskId", handler.GetTaskEndpoint)
 	task.Put("/", handler.UpdateTaskEndpoint)
-	// task.Post("/markTaskComplete/:taskId", handler.MarkTaskCompleteEndpoint)
 	task.Delete("/:taskId", handler.DeleteTaskByTaskIdEndpoint)
 }
 
@@ -70,6 +69,8 @@ func setUpTaskEntryRoutes(api fiber.Router) {
 	taskEntry.Use(middleware.IsExpired())
 
 	taskEntry.Post("/", handler.CreateTaskEntry)
+	taskEntry.Post("/markTaskEntryComplete/:taskEntryId", handler.MarkTaskEntryCompleteEndpoint)
+	// taskEntry.Post("/closeTaskEntry/:taskEntryId", handler.CloseTaskEntryEndpoint)
 }
 
 func setUpStatsRoutes(api fiber.Router) {

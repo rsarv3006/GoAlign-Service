@@ -118,3 +118,91 @@ func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
 
 	return nil
 }
+
+func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
+	taskEntryId := c.Params("taskEntryId")
+
+	taskEntryToMarkComplete, err := getTaskEntryByTaskEntryId(taskEntryId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	task, err := getTaskByTaskId(taskEntryToMarkComplete.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if taskEntryToMarkComplete.Status == "completed" {
+		return sendBadRequestResponse(c, err, "Task Entry is already marked complete")
+	}
+
+	isUserTheTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if !isUserTheTeamManager || taskEntryToMarkComplete.AssignedUserId != currentUser.UserId {
+		return sendUnauthorizedResponse(c)
+	}
+
+	query := database.TaskEntryMarkCompleteQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskEntryId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	// TODO: assign task to next user in the queue
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "Task Entry Marked Complete",
+		"success": true,
+	})
+}
+
+func getTaskEntryByTaskEntryId(taskEntryId string) (*model.TaskEntry, error) {
+	query := database.TaskEntryGetByTaskEntryIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	taskEntry := new(model.TaskEntry)
+
+	rows, err := stmt.Query(taskEntryId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return taskEntry, nil
+}
