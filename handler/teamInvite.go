@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,43 +16,26 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	teamInviteCreateDto := new(model.TeamInviteCreateDto)
 
 	if err := c.BodyParser(teamInviteCreateDto); err != nil {
-		log.Error(err)
-		log.Error("Error parsing body")
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Bad Request",
-			"error":   err,
-		})
+		return sendBadRequestResponse(c, err, "Error parsing body")
 	}
 
 	query := database.TeamInviteCreateQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	_, err = stmt.Exec(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email, currentUser.UserId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -64,22 +48,14 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	query := database.TeamInviteGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamInvite := new(model.TeamInvite)
@@ -87,46 +63,32 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	rows, err := stmt.Query(c.Params("teamInviteId"))
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
 
 		if err != nil {
-			log.Error(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 	}
 
 	if isTeamInviteStructEmpty(teamInvite) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Team invite does not exist",
-		})
+		err := errors.New("Team invite does not exist")
+		return sendBadRequestResponse(c, err, "Team invite does not exist")
 	}
 
 	if teamInvite.Status != "pending" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Team invite is not pending",
-		})
+		err := errors.New("Team invite is not pending")
+		return sendBadRequestResponse(c, err, "Team invite is not pending")
 	}
 
 	query = database.TeamInviteAcceptQueryString
 	stmt, err = database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	// TODO: check if this value requires sanitization
@@ -135,31 +97,19 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	_, err = stmt.Exec(teamInviteId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamMembership, err := CreateUserTeamMembership(currentUser.UserId, teamInvite.TeamId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	team, err := getTeamById(teamInvite.TeamId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -174,22 +124,14 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 	_, err := auth.ValidateToken(token)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	query := database.TeamInviteGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamInvite := new(model.TeamInvite)
@@ -198,56 +140,38 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 	rows, err := stmt.Query(teamInviteId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
 
 		if err != nil {
-			log.Error(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 	}
 
 	if isTeamInviteStructEmpty(teamInvite) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Team invite does not exist",
-		})
+		err := errors.New("Team invite does not exist")
+		return sendBadRequestResponse(c, err, "Team invite does not exist")
 	}
 
 	if teamInvite.Status != "pending" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Team invite is not pending",
-		})
+		err := errors.New("Team invite is not pending")
+		return sendBadRequestResponse(c, err, "Team invite is not pending")
 	}
 
 	query = database.TeamInviteDeclineQueryString
 	stmt, err = database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	_, err = stmt.Exec(teamInviteId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -258,32 +182,20 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	query := database.TeamInvitesForCurrentUserQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	rows, err := stmt.Query(currentUser.Email)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamInvites := make([]model.TeamInvite, 0)
@@ -293,11 +205,7 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
 
 		if err != nil {
-			log.Error(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 
 		teamInvites = append(teamInvites, teamInvite)
@@ -333,22 +241,14 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	query := database.TeamInviteGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamInvite := new(model.TeamInvite)
@@ -357,11 +257,7 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	rows, err := stmt.Query(teamInviteId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
@@ -377,35 +273,24 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	}
 
 	if isTeamInviteStructEmpty(teamInvite) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Team invite does not exist",
-		})
+		return sendNotFoundResponse(c, "Team invite does not exist")
 	}
 
 	if !isAllowedToDeleteTeamInvite(teamInvite, currentUser) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Team invite does not belong to current user",
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	query = database.TeamInviteDeleteQueryString
 	stmt, err = database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	_, err = stmt.Exec(teamInviteId)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
@@ -418,11 +303,7 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 	// TODO: Check if user can view team invites for this team
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"message": "Unauthorized",
-			"error":   err,
-		})
+		return sendUnauthorizedResponse(c)
 	}
 
 	teamId := c.Params("teamId")
@@ -431,21 +312,13 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	rows, err := stmt.Query(teamId)
 
 	if err != nil {
-		log.Error(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Internal Server Error",
-			"error":   err,
-		})
+		return sendInternalServerErrorResponse(c, err)
 	}
 
 	teamInvites := make([]model.TeamInvite, 0)
@@ -455,11 +328,7 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
 
 		if err != nil {
-			log.Error(err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Internal Server Error",
-				"error":   err,
-			})
+			return sendInternalServerErrorResponse(c, err)
 		}
 
 		teamInvites = append(teamInvites, teamInvite)
