@@ -46,3 +46,10 @@ func sendNotFoundResponse(c *fiber.Ctx, message string) error {
 		"success": false,
 	})
 }
+
+func sendForbiddenResponse(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+		"message": "Forbidden",
+		"success": false,
+	})
+}

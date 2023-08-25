@@ -444,3 +444,59 @@ func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 
 	return task, nil
 }
+
+func UpdateTaskEndpoint(c *fiber.Ctx) error {
+	// TODO: handle updates to assigned user id since that's on the task entry row
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
+	taskUpdateDto := new(model.TaskUpdateDto)
+
+	if err := c.BodyParser(taskUpdateDto); err != nil {
+		return sendBadRequestResponse(c, err, "error parsing body")
+	}
+
+	taskId := taskUpdateDto.TaskId
+	taskToUpdate, err := getTaskByTaskId(taskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	teamId := taskToUpdate.TeamId
+	isUserTheTeamManager, err := isUserTheTeamManager(currentUser.UserId, teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if !isUserTheTeamManager {
+		return sendForbiddenResponse(c)
+	}
+
+	query := database.TaskUpdateByTaskIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(taskUpdateDto.TaskName, taskUpdateDto.Notes, taskUpdateDto.StartDate, taskUpdateDto.EndDate, taskUpdateDto.RequiredCompletionsNeeded, taskUpdateDto.IntervalBetweenWindowsCount, taskUpdateDto.IntervalBetweenWindowsUnit, taskUpdateDto.WindowDurationCount, taskUpdateDto.WindowDurationUnit, taskUpdateDto.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer rows.Close()
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Task updated successfully",
+		"success": true,
+	})
+}

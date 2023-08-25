@@ -64,20 +64,37 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task
 POST http://localhost:3000/api/task/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTI2NzI3ODJ9.u4ubyY21GFLOm9ICXwA478mUuS-hMvrYWILQzzrpyqg
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTI5MzMxMTF9.-9WY745Eyl3CmS3ywK77DPvCjDvDdyS9S-hY6QYnuck
 
 {
   "task_name": "waffles",
   "notes": "waffles are good",
   "required_completions_needed": 2,
   "team_id": "07ae863f-714d-47c8-992a-f49b95667533",
-  "start_date": "2023-08-24T03:21:17Z",
+  "start_date": "2023-08-25T03:21:17Z",
   "creator_id": "5a4833b5-1e6d-4d51-8e11-bc98ae054845",
   "interval_between_windows_count": 1,
   "interval_between_windows_unit": "day(s)",
   "window_duration_count": 1,
   "window_duration_unit": "day(s)",
   "status": "active"
+}
+
+### update task
+PUT http://localhost:3000/api/task
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTI5MzMxMTF9.-9WY745Eyl3CmS3ywK77DPvCjDvDdyS9S-hY6QYnuck
+
+{
+  "task_id": "c8e66eb2-5876-49c4-b3f1-5806efe96ef7",
+  "task_name": "pancakes",
+  "notes": "pancakes are better",
+  "required_completions_needed": 2,
+  "start_date": "2023-08-27T03:21:17Z",
+  "interval_between_windows_count": 2,
+  "interval_between_windows_unit": "day(s)",
+  "window_duration_count": 2,
+  "window_duration_unit": "day(s)"
 }
 
 ### get tasks by current user

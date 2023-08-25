@@ -58,3 +58,19 @@ const TaskDeleteByTaskIdQuery = `
 DELETE FROM tasks
 WHERE task_id = $1;
 `
+
+const TaskUpdateByTaskIdQuery = `
+UPDATE tasks 
+SET
+  task_name = $1,
+  notes = $2,
+  start_date = $3,
+  end_date = $4,
+  required_completions_needed = $5,  
+  interval_between_windows_count = $6,
+  interval_between_windows_unit = $7,
+  window_duration_count = $8,
+  window_duration_unit = $9
+WHERE task_id = $10
+RETURNING *
+`
