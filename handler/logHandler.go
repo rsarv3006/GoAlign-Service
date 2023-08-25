@@ -59,4 +59,24 @@ func logEvent(logCreateDto *model.LogCreateDto, userId uuid.UUID) error {
 	return nil
 }
 
-// TODO: Create func to handle just an error message for internal logging
+func logEventOnlyMessage(logCreateDto *model.LogCreateDto) error {
+	query := database.LogCreateQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Query(
+		logCreateDto.LogMessage,
+		logCreateDto.LogLevel,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

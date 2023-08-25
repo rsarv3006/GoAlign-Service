@@ -108,6 +108,5 @@ func setUpLoggingRoutes(api fiber.Router) {
 
 	log.Use(logger.New())
 	log.Use(middleware.IsExpired())
-	// TODO: implement logging for all errors in all handlers
 	log.Post("/", handler.LogEventEndpoint)
 }

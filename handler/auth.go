@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -65,6 +66,8 @@ func FetchCode(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Invalid request body")
 	}
 
+	err := errors.New("Waffles are delicious")
+	return sendInternalServerErrorResponse(c, err)
 	// TODO: Add actual code checking
 
 	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE email = $1", dto.Email)

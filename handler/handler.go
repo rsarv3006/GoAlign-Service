@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func sendUnauthorizedResponse(c *fiber.Ctx) error {
@@ -14,11 +15,19 @@ func sendUnauthorizedResponse(c *fiber.Ctx) error {
 }
 
 func sendInternalServerErrorResponse(c *fiber.Ctx, err error) error {
-	// TODO: implement logging
 	log.Println(err)
+	logCreateDto := new(model.LogCreateDto)
+	logCreateDto.LogLevel = "error"
+	logCreateDto.LogMessage = err.Error()
+	err = logEventOnlyMessage(logCreateDto)
+
+	if err != nil {
+		log.Println(err)
+	}
+
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"message": "Internal Server Error",
-		"error":   err,
+		"error":   logCreateDto,
 		"success": false,
 	})
 }

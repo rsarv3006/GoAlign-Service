@@ -14,3 +14,14 @@ INSERT INTO app_logs (
 )
 RETURNING *
 ;`
+
+const LogCreateQuery = `
+INSERT INTO app_logs (
+  log_message,
+  log_level
+) VALUES (
+  $1,
+  $2
+)
+RETURNING *
+;`
