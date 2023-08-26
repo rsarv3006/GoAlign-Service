@@ -77,7 +77,7 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Window duration unit is invalid")
 	}
 
-	team, err := getTeamByTeamId(taskDto.TeamId)
+	team, err := getTeamById(taskDto.TeamId)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

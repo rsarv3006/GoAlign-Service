@@ -168,6 +168,13 @@ func getTeamById(teamId uuid.UUID) (*model.Team, error) {
 }
 
 func DeleteTeam(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
 	teamId, err := uuid.Parse(c.Params("id"))
 
 	if err != nil {
@@ -180,15 +187,8 @@ func DeleteTeam(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Invalid team id")
 	}
 
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
-
 	if teamToDelete.TeamManagerId != currentUser.UserId {
-		return sendUnauthorizedResponse(c)
+		return sendForbiddenResponse(c)
 	}
 
 	err = DeleteTeamSettingsByTeamId(teamId)
@@ -243,37 +243,6 @@ func deleteTeam(teamId uuid.UUID) error {
 	return nil
 }
 
-func getTeamByTeamId(teamIdToFind uuid.UUID) (*model.Team, error) {
-	query := database.TeamGetByIdQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	team := new(model.Team)
-	rows, err := stmt.Query(teamIdToFind)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		// TODO: Add check for empty rows
-		err = rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	log.Info("Team: ", team)
-
-	return team, nil
-}
-
 func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
 	query := database.TeamGetByTeamManagerIdQueryString
 	stmt, err := database.DB.Prepare(query)
@@ -324,7 +293,7 @@ func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 	}
 
 	if !isUserInTeam {
-		return sendUnauthorizedResponse(c)
+		return sendForbiddenResponse(c)
 	}
 
 	return c.Status(200).JSON(&fiber.Map{

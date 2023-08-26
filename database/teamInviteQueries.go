@@ -49,3 +49,9 @@ SELECT * FROM team_invites
 WHERE team_id = $1
 ;
 `
+
+const TeamInviteDeleteByUserEmailQueryString = `
+DELETE FROM team_invites
+WHERE email = $1
+;
+`

@@ -9,8 +9,6 @@ import (
 )
 
 func DeleteUserEndpoint(c *fiber.Ctx) error {
-	// TODO: remove teamInvites created by user
-	// TODO: remove teamInvites where user email is in teamInvite
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
 
@@ -19,6 +17,12 @@ func DeleteUserEndpoint(c *fiber.Ctx) error {
 	}
 
 	userId := currentUser.UserId
+
+	err = deleteTeamInvitesByUserEmail(currentUser.Email)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
 	isUserATeamManagerOfAnyTeam := isUserATeamManagerOfAnyTeam(userId)
 

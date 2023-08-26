@@ -152,7 +152,7 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 	}
 
 	if !isUserTheTeamManager || taskEntryToMarkComplete.AssignedUserId != currentUser.UserId {
-		return sendUnauthorizedResponse(c)
+		return sendForbiddenResponse(c)
 	}
 
 	query := database.TaskEntryMarkCompleteQuery
@@ -240,7 +240,7 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 	}
 
 	if !isUserTheTeamManager {
-		return sendUnauthorizedResponse(c)
+		return sendForbiddenResponse(c)
 	}
 
 	query := database.TaskEntryCancelCurrentTaskEntryQuery

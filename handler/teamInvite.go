@@ -222,7 +222,7 @@ func isTeamInviteStructEmpty(teamInvite *model.TeamInvite) bool {
 }
 
 func isAllowedToDeleteTeamInvite(teamInvite *model.TeamInvite, currentUser *model.User) bool {
-	team, err := getTeamByTeamId(teamInvite.TeamId)
+	team, err := getTeamById(teamInvite.TeamId)
 
 	if err != nil {
 		log.Error(err)
@@ -277,7 +277,7 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	}
 
 	if !isAllowedToDeleteTeamInvite(teamInvite, currentUser) {
-		return sendUnauthorizedResponse(c)
+		return sendForbiddenResponse(c)
 	}
 
 	query = database.TeamInviteDeleteQueryString
@@ -339,4 +339,21 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 		"message":     "Team invites by team id",
 		"teamInvites": teamInvites,
 	})
+}
+
+func deleteTeamInvitesByUserEmail(email string) error {
+	query := database.TeamInviteDeleteByUserEmailQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(email)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

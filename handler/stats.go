@@ -42,7 +42,7 @@ func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
 	}
 
 	if !isMember {
-		return sendUnauthorizedResponse(c)
+		return sendForbiddenResponse(c)
 	}
 
 	statsReturnDto, err := getStatsByTeamId(teamId)
