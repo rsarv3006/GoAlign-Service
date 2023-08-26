@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -47,12 +46,9 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Start date cannot be in the past")
 	}
 
-	endDate := time.Time{}
 	if taskDto.EndDate != nil && taskDto.EndDate.Before(taskDto.StartDate) {
 		err := errors.New("End date cannot be before start date")
 		return sendBadRequestResponse(c, err, "End date cannot be before start date")
-	} else if taskDto.EndDate != nil {
-		endDate = *taskDto.EndDate
 	}
 
 	requiredCompletionsNeeded := taskDto.RequiredCompletionsNeeded
@@ -81,8 +77,25 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Window duration unit is invalid")
 	}
 
-	// TODO: Add validation for teamId
-	// TODO: Add validation for CreatorId
+	team, err := getTeamByTeamId(taskDto.TeamId)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			err := errors.New("Team does not exist")
+			return sendBadRequestResponse(c, err, "Team does not exist")
+		} else {
+			log.Println(err)
+			return sendInternalServerErrorResponse(c, err)
+		}
+	}
+
+	log.Println("team.TeamManagerId", team.TeamManagerId)
+	log.Println("currentUser.UserId", currentUser.UserId)
+
+	if team.TeamManagerId != currentUser.UserId {
+		err := errors.New("Only the team creator can create tasks for the team")
+		return sendBadRequestResponse(c, err, "Only the team creator can create tasks for the team")
+	}
 
 	query := database.TaskCreateQuery
 	stmt, err := database.DB.Prepare(query)
@@ -96,7 +109,7 @@ func CreateTask(c *fiber.Ctx) error {
 
 	task := new(model.Task)
 
-	rows, err := stmt.Query(taskName, notes, taskDto.StartDate, endDate, requiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
+	rows, err := stmt.Query(taskName, notes, taskDto.StartDate, taskDto.EndDate, requiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
 
 	if err != nil {
 		log.Println(err)

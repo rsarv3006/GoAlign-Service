@@ -1,8 +1,6 @@
 package router
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"gitlab.com/donutsahoy/yourturn-fiber/handler"
@@ -12,8 +10,6 @@ import (
 // SetupRoutes func
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
-
-	log.Println("setting up routes thing 1")
 
 	setupAuthRoutes(api)
 	setUpTeamRoutes(api)
@@ -70,7 +66,7 @@ func setUpTaskEntryRoutes(api fiber.Router) {
 
 	taskEntry.Post("/", handler.CreateTaskEntry)
 	taskEntry.Post("/markTaskEntryComplete/:taskEntryId", handler.MarkTaskEntryCompleteEndpoint)
-	// taskEntry.Post("/closeTaskEntry/:taskEntryId", handler.CloseTaskEntryEndpoint)
+	taskEntry.Post("/cancelCurrentTaskEntry/:taskEntryId", handler.CancelCurrentTaskEntryEndpoint)
 }
 
 func setUpStatsRoutes(api fiber.Router) {

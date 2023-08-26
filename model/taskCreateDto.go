@@ -17,6 +17,6 @@ type TaskCreateDto struct {
 	WindowDurationCount         int        `json:"window_duration_count"`
 	WindowDurationUnit          string     `json:"window_duration_unit"`
 	TeamId                      uuid.UUID  `json:"team_id"`
-	CreatorId                   uuid.UUID  `json:"creator_id"`
 	Status                      string     `json:"status"`
+	Assigned_User_Id            uuid.UUID  `json:"assigned_user_id"`
 }

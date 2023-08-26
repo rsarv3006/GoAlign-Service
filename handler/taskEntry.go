@@ -206,3 +206,59 @@ func getTaskEntryByTaskEntryId(taskEntryId string) (*model.TaskEntry, error) {
 
 	return taskEntry, nil
 }
+
+func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
+	taskEntryId := c.Params("taskEntryId")
+
+	taskEntryToCancel, err := getTaskEntryByTaskEntryId(taskEntryId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	task, err := getTaskByTaskId(taskEntryToCancel.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if taskEntryToCancel.Status == "completed" {
+		return sendBadRequestResponse(c, err, "Task Entry is already marked complete")
+	}
+
+	isUserTheTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if !isUserTheTeamManager {
+		return sendUnauthorizedResponse(c)
+	}
+
+	query := database.TaskEntryCancelCurrentTaskEntryQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskEntryId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	// TODO: assign task to next user in the queue
+
+	return c.SendStatus(fiber.StatusNoContent)
+}

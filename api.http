@@ -64,15 +64,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task
 POST http://localhost:3000/api/task/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTI5MzMxMTF9.-9WY745Eyl3CmS3ywK77DPvCjDvDdyS9S-hY6QYnuck
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTMwMTc1Mzh9.BiVwF0VAecx-wv6ICW4ahFFEJvBswsGgArdHj9sPNFU
 
 {
   "task_name": "waffles",
   "notes": "waffles are good",
   "required_completions_needed": 2,
   "team_id": "07ae863f-714d-47c8-992a-f49b95667533",
-  "start_date": "2023-08-25T03:21:17Z",
-  "creator_id": "5a4833b5-1e6d-4d51-8e11-bc98ae054845",
+  "start_date": "2023-09-25T03:21:17Z",
   "interval_between_windows_count": 1,
   "interval_between_windows_unit": "day(s)",
   "window_duration_count": 1,
@@ -100,7 +99,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### get tasks by current user
 GET http://localhost:3000/api/task/assignedToCurrentUser
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIzMzUwODB9.MYO8jO2IjWywEe4jVyGLLsO_YGedCeAtjJjGmAJpFHA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTMwMDMzNTV9.CQDz5zwwyvj5FnSC4cQPqH3jHTx3HPvxu5Q-MhtbzvQ
 
 ### get tasks by team id
 GET http://localhost:3000/api/task/byTeam/07ae863f-714d-47c8-992a-f49b95667533

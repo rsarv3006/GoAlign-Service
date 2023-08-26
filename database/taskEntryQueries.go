@@ -40,3 +40,9 @@ UPDATE task_entries
 SET status = 'completed'
 WHERE task_entry_id = $1;
 `
+
+const TaskEntryCancelCurrentTaskEntryQuery = `
+UPDATE task_entries
+SET status = 'cancelled'
+WHERE task_id = $1;
+`
