@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
@@ -91,10 +92,15 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	// TODO: check if this value requires sanitization
 	teamInviteId := c.Params("teamInviteId")
 
-	_, err = stmt.Exec(teamInviteId)
+	teamInviteIdUUID, err := uuid.Parse(teamInviteId)
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Error parsing team invite id")
+	}
+
+	_, err = stmt.Exec(teamInviteIdUUID)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -298,15 +304,28 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 
 func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	_, err := auth.ValidateToken(token)
-
-	// TODO: Check if user can view team invites for this team
+	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
 	}
 
 	teamId := c.Params("teamId")
+	teamIdUUID, err := uuid.Parse(teamId)
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid team id")
+	}
+
+	team, err := getTeamById(teamIdUUID)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if team.TeamManagerId != currentUser.UserId {
+		return sendForbiddenResponse(c)
+	}
 
 	query := database.TeamInviteGetByTeamIdQueryString
 	stmt, err := database.DB.Prepare(query)
