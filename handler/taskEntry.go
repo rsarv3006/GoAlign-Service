@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,7 +10,8 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
-func CreateTaskEntry(c *fiber.Ctx) error {
+// TODO: convert to private func and call from task handler and mark complete task entry
+func createTaskEntry(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
 
@@ -25,9 +25,21 @@ func CreateTaskEntry(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
-	// TODO: Validate taskEntryDto
-	// TODO: Validate current users permissions to create task entry
-	log.Println(currentUser.UserName)
+	task, err := getTaskByTaskId(taskEntryDto.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	isUserTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if !isUserTeamManager {
+		return sendForbiddenResponse(c)
+	}
 
 	query := database.TaskEntryCreateQuery
 	stmt, err := database.DB.Prepare(query)

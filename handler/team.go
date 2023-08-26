@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -299,5 +300,67 @@ func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 	return c.Status(200).JSON(&fiber.Map{
 		"success": true,
 		"team":    team,
+	})
+}
+
+func UpdateTeamManagerEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
+	teamId, err := uuid.Parse(c.Params("teamId"))
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid team id")
+	}
+
+	team, err := getTeamById(teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if team.TeamManagerId != currentUser.UserId {
+		return sendForbiddenResponse(c)
+	}
+
+	teamManagerId, err := uuid.Parse(c.Params("teamManagerId"))
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid team manager id")
+	}
+
+	isUserInTeam, err := isUserInTeam(teamManagerId, teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if !isUserInTeam {
+		err = errors.New("User is not in team")
+		return sendBadRequestResponse(c, err, "User is not in team")
+	}
+
+	query := database.TeamUpdateTeamManagerQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Query(teamManagerId, teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	return c.Status(200).JSON(&fiber.Map{
+		"success": true,
+		"message": "Team manager updated successfully",
 	})
 }

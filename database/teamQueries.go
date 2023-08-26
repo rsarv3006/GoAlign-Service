@@ -32,3 +32,10 @@ const TeamGetByTeamManagerIdQueryString = `
 const TeamGetByTeamIdAndManagerIdQuery = `
  select team_manager_id from teams where team_id = $1 and team_manager_id = $2;
 `
+
+const TeamUpdateTeamManagerQueryString = `
+  UPDATE teams
+  SET team_manager_id = $1
+  WHERE team_id = $2
+  RETURNING *;
+`

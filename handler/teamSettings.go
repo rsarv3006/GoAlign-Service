@@ -1,7 +1,12 @@
 package handler
 
 import (
+	"database/sql"
+	"strings"
+
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
@@ -53,4 +58,72 @@ func DeleteTeamSettingsByTeamId(teamId uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
+	teamId, err := uuid.Parse(c.Params("teamId"))
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid team id")
+	}
+
+	team, err := getTeamById(teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if team.TeamManagerId != currentUser.UserId {
+		return sendForbiddenResponse(c)
+	}
+
+	teamSettingsDto := new(model.TeamSettingsUpdateDto)
+
+	if err := c.BodyParser(teamSettingsDto); err != nil {
+		return sendBadRequestResponse(c, err, "Invalid request body")
+	}
+
+	if teamSettingsDto.CanAllMembersAddTasks == nil {
+		return sendBadRequestResponse(c, err, "Invalid request body")
+	}
+
+	query := database.TeamSettingsUpdateQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(teamSettingsDto.CanAllMembersAddTasks, teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	teamSettings := new(model.TeamSettings)
+
+	if rows.Next() {
+		err := rows.Scan(&teamSettings.TeamSettingsId, &teamSettings.TeamId, &teamSettings.CanAllMembersAddTasks)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return sendNotFoundResponse(c, "Team settings not found")
+			}
+			return sendInternalServerErrorResponse(c, err)
+		}
+	}
+
+	return c.Status(201).JSON(&fiber.Map{
+		"success":  true,
+		"settings": teamSettings,
+	})
 }
