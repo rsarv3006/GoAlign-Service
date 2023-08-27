@@ -25,3 +25,8 @@ const UserTeamMembershipGetByUserIdAndTeamIdQuery = `
 SELECT * FROM user_team_membership
 WHERE user_id = $1 AND team_id = $2;
 `
+
+const UserTeamMembershipDeleteQueryString = `
+DELETE FROM user_team_membership
+WHERE user_id = $1 AND team_id = $2;
+`

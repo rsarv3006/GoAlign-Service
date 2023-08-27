@@ -39,7 +39,7 @@ func setUpTeamRoutes(api fiber.Router) {
 	team.Get("/", handler.GetTeamsForCurrentUser)
 	team.Delete("/:id", handler.DeleteTeam)
 	team.Get("/:teamId", handler.GetTeamByTeamIdEndpoint)
-	// team.Post("/removeUserFromTeam/", handler.RemoveUserFromTeam)
+	team.Post("/removeUserFromTeam/:teamId/:userId", handler.RemoveUserFromTeamEndpoint)
 	team.Post("/updateTeamManager/:teamId/:teamManagerId", handler.UpdateTeamManagerEndpoint)
 	team.Post("/updateTeamSettings/:teamId", handler.UpdateTeamSettingsEndpoint)
 }
