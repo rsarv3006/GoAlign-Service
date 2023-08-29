@@ -6,10 +6,11 @@ func CreateUserTable() {
 	log.Println("Creating users table")
 	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS users (
   user_id UUID PRIMARY KEY default gen_random_uuid(),
-  user_name VARCHAR(50) NOT NULL,
+  username VARCHAR(50) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  is_email_verified BOOLEAN NOT NULL DEFAULT FALSE
+  is_email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 `)
 
@@ -141,6 +142,23 @@ func CreateAppLogsTable() {
   log_date timestamptz NOT NULL DEFAULT NOW(),
   log_data jsonb,
   user_id uuid 
+);`)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func CreateLoginRequestsTable() {
+	log.Println("Creating login_requests table")
+	_, err := DB.Query(`
+  CREATE TABLE IF NOT EXISTS login_requests (
+  login_request_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES users(user_id),
+  login_request_date timestamptz NOT NULL DEFAULT NOW(),
+  login_request_expiration_date timestamptz NOT NULL,
+  login_request_token varchar(255) NOT NULL,
+  login_request_status varchar(50) NOT NULL DEFAULT 'pending'
 );`)
 
 	if err != nil {

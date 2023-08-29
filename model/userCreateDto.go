@@ -1,6 +1,6 @@
 package model
 
 type UserCreateDto struct {
-	UserName string `json:"user_name"`
+	UserName string `json:"username"`
 	Email    string `json:"email"`
 }

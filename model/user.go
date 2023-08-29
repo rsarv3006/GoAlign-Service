@@ -1,13 +1,18 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type User struct {
 	UserId          uuid.UUID `json:"user_id"`
-	UserName        string    `json:"user_name"`
+	UserName        string    `json:"username"`
 	Email           string    `json:"email"`
 	IsActive        bool      `json:"is_active"`
 	IsEmailVerified bool      `json:"is_email_verified"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type UserList struct {

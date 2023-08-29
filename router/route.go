@@ -25,8 +25,9 @@ func setupAuthRoutes(api fiber.Router) {
 	auth := api.Group("/auth", logger.New())
 
 	auth.Post("/register", handler.Register)
-	// auth.Post("/login", handler.Login)
+	auth.Post("/login", handler.Login)
 	auth.Post("/code", handler.FetchCode)
+	// TODO: Add refresh token route
 }
 
 func setUpTeamRoutes(api fiber.Router) {

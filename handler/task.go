@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,7 +24,6 @@ func CreateTask(c *fiber.Ctx) error {
 	taskDto := new(model.TaskCreateDto)
 
 	if err := c.BodyParser(taskDto); err != nil {
-		log.Println(err)
 		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
@@ -84,13 +82,9 @@ func CreateTask(c *fiber.Ctx) error {
 			err := errors.New("Team does not exist")
 			return sendBadRequestResponse(c, err, "Team does not exist")
 		} else {
-			log.Println(err)
 			return sendInternalServerErrorResponse(c, err)
 		}
 	}
-
-	log.Println("team.TeamManagerId", team.TeamManagerId)
-	log.Println("currentUser.UserId", currentUser.UserId)
 
 	if team.TeamManagerId != currentUser.UserId {
 		err := errors.New("Only the team creator can create tasks for the team")
@@ -101,7 +95,6 @@ func CreateTask(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -112,24 +105,48 @@ func CreateTask(c *fiber.Ctx) error {
 	rows, err := stmt.Query(taskName, notes, taskDto.StartDate, taskDto.EndDate, requiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
 	for rows.Next() {
 		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
 		if err != nil {
-			log.Println(err)
 			return sendInternalServerErrorResponse(c, err)
 		}
 	}
 
-	// TODO: create task entry
+	endDateInterval := model.IntervalObj{}
+	endDateInterval.IntervalCount = task.WindowDurationCount
+	endDateInterval.IntervalUnit = model.IntervalVariant(task.WindowDurationUnit)
+
+	endDate, err := helper.FindDateFromDateAndInterval(task.StartDate, endDateInterval)
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Error calculating end date")
+	}
+
+	if taskDto.EndDate != nil && taskDto.EndDate.Before(endDate) {
+		return sendBadRequestResponse(c, err, "End date cannot be before calculated end date")
+	}
+
+	taskEntryCreateDto := new(model.TaskEntryCreateDto)
+	taskEntryCreateDto.TaskId = task.TaskId
+	taskEntryCreateDto.StartDate = task.StartDate
+	taskEntryCreateDto.EndDate = endDate
+	taskEntryCreateDto.Notes = task.Notes
+	taskEntryCreateDto.AssignedUserId = taskDto.AssignedUserId
+
+	taskEntry, err := createTaskEntry(taskEntryCreateDto, currentUser.UserId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Task created successfully",
-		"task":    task,
-		"success": true,
+		"message":   "Task created successfully",
+		"task":      task,
+		"taskEntry": taskEntry,
+		"success":   true,
 	})
 }
 
@@ -145,7 +162,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -154,7 +170,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	rows, err := stmt.Query(currentUser.UserId)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -164,7 +179,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 		task := new(model.Task)
 		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
 		if err != nil {
-			log.Println(err)
 			return sendInternalServerErrorResponse(c, err)
 		}
 		tasks = append(tasks, task)
@@ -174,7 +188,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	taskEntryStmt, err := database.DB.Prepare(taskEntryQuery)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -185,7 +198,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	rows, err = taskEntryStmt.Query(currentUser.UserId)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -195,7 +207,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
 
 		if err != nil {
-			log.Println(err)
 			return sendInternalServerErrorResponse(c, err)
 		}
 		taskEntries = append(taskEntries, taskEntry)
@@ -344,14 +355,12 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 			})
 		}
 
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
 	isUserTheTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -365,7 +374,6 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 	err = deleteTaskByTaskId(taskId)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -397,7 +405,6 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 	currentUser, err := auth.ValidateToken(token)
 
 	if err != nil {
-		log.Println(err)
 		return sendUnauthorizedResponse(c)
 	}
 

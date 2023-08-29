@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,42 +11,39 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
-// TODO: convert to private func and call from task handler and mark complete task entry
-func createTaskEntry(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId uuid.UUID) (*model.TaskEntry, error) {
+	task, err := getTaskByTaskId(taskEntryCreateDto.TaskId)
 
 	if err != nil {
-		return sendUnauthorizedResponse(c)
+		return nil, err
 	}
 
-	taskEntryDto := new(model.TaskEntryCreateDto)
-
-	if err := c.BodyParser(taskEntryDto); err != nil {
-		return sendBadRequestResponse(c, err, "Error parsing request body")
-	}
-
-	task, err := getTaskByTaskId(taskEntryDto.TaskId)
+	isUserTeamManager, err := isUserTheTeamManager(currentUserId, task.TeamId)
 
 	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
+		return nil, err
 	}
 
-	isUserTeamManager, err := isUserTheTeamManager(currentUser.UserId, task.TeamId)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
+	// TODO: check team settings for whether or not this check actually applies
 	if !isUserTeamManager {
-		return sendForbiddenResponse(c)
+		return nil, errors.New("User is not the team manager")
+	}
+
+	isUserInTeam, err := isUserInTeam(taskEntryCreateDto.AssignedUserId, task.TeamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !isUserInTeam {
+		return nil, errors.New("User is not in the team")
 	}
 
 	query := database.TaskEntryCreateQuery
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
+		return nil, err
 	}
 
 	defer stmt.Close()
@@ -53,30 +51,26 @@ func createTaskEntry(c *fiber.Ctx) error {
 	taskEntry := new(model.TaskEntry)
 
 	rows, err := stmt.Query(
-		taskEntryDto.StartDate,
-		taskEntryDto.EndDate,
-		taskEntryDto.Notes,
-		taskEntryDto.AssignedUserId,
-		taskEntryDto.TaskId,
+		taskEntryCreateDto.StartDate,
+		taskEntryCreateDto.EndDate,
+		taskEntryCreateDto.Notes,
+		taskEntryCreateDto.AssignedUserId,
+		taskEntryCreateDto.TaskId,
 	)
 
 	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
+		return nil, err
 	}
 
 	for rows.Next() {
 		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
 
 		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
+			return nil, err
 		}
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message":   "Task Entry Created",
-		"taskEntry": taskEntry,
-		"success":   true,
-	})
+	return taskEntry, nil
 }
 
 func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntry, error) {
@@ -274,3 +268,55 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
+
+func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntry, error) {
+	query := database.TaskEntriesGetByTaskIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	taskEntries := make([]model.TaskEntry, 0)
+
+	rows, err := stmt.Query(taskId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		taskEntry := new(model.TaskEntry)
+
+		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskEntries = append(taskEntries, *taskEntry)
+	}
+
+	return taskEntries, nil
+}
+
+// func determineNextUserToAssignTaskTo(taskId uuid.UUID) (*model.TaskEntry, error) {
+// 	// TODO: implement this function with round robin user assignment
+
+// 	task, err := getTaskByTaskId(taskId)
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	taskEntries, err := getTaskEntriesByTaskId(taskId)
+
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+//   teamMembers, err := getTeamMembersByTeamId(task.TeamId)
+// 	return nil, nil
+// }

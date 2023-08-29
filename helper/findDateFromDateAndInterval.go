@@ -2,14 +2,15 @@ package helper
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
-func FindDateFromDateAndInterval(date time.Time, interval model.IntervalObj) (*time.Time, error) {
+func FindDateFromDateAndInterval(date time.Time, interval model.IntervalObj) (time.Time, error) {
 	if interval.IntervalCount == 0 {
-		return nil, errors.New("Interval count cannot be 0")
+		return time.Now(), errors.New("Interval count cannot be 0")
 	}
 
 	if interval.IntervalUnit == model.Minute {
@@ -25,8 +26,9 @@ func FindDateFromDateAndInterval(date time.Time, interval model.IntervalObj) (*t
 	} else if interval.IntervalUnit == model.Year {
 		date = date.AddDate(interval.IntervalCount, 0, 0)
 	} else {
-		return nil, errors.New("Interval unit not found")
+		return time.Now(), errors.New("Interval unit not found")
 	}
 
-	return &date, nil
+	log.Println("date: ", date)
+	return date, nil
 }

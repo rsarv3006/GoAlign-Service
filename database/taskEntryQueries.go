@@ -46,3 +46,8 @@ UPDATE task_entries
 SET status = 'cancelled'
 WHERE task_id = $1;
 `
+
+const TaskEntriesGetByTaskIdQuery = `
+SELECT * FROM task_entries
+WHERE task_id = $1;
+`
