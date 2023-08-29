@@ -127,3 +127,32 @@ func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
 		"settings": teamSettings,
 	})
 }
+
+func getTeamSettingsByTeamId(teamId uuid.UUID) (*model.TeamSettings, error) {
+	query := database.TeamSettingsGetByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(teamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamSettings := new(model.TeamSettings)
+
+	if rows.Next() {
+		err := rows.Scan(&teamSettings.TeamSettingsId, &teamSettings.TeamId, &teamSettings.CanAllMembersAddTasks)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return teamSettings, nil
+}

@@ -15,8 +15,6 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
-// TODO: add check to make sure we don't create duplicate login requests
-
 func Register(c *fiber.Ctx) error {
 	userCreateDto := new(model.UserCreateDto)
 

@@ -18,17 +18,6 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 		return nil, err
 	}
 
-	isUserTeamManager, err := isUserTheTeamManager(currentUserId, task.TeamId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: check team settings for whether or not this check actually applies
-	if !isUserTeamManager {
-		return nil, errors.New("User is not the team manager")
-	}
-
 	isUserInTeam, err := isUserInTeam(taskEntryCreateDto.AssignedUserId, task.TeamId)
 
 	if err != nil {
@@ -37,6 +26,21 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 
 	if !isUserInTeam {
 		return nil, errors.New("User is not in the team")
+	}
+	isUserTeamManager, err := isUserTheTeamManager(currentUserId, task.TeamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamSettings, err := getTeamSettingsByTeamId(task.TeamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !teamSettings.CanAllMembersAddTasks && !isUserTeamManager {
+		return nil, errors.New("User is not the team manager")
 	}
 
 	query := database.TaskEntryCreateQuery
