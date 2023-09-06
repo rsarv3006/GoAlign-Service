@@ -173,50 +173,55 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	tasks := make([]*model.Task, 0)
+	tasks := make([]*model.TaskReturnWithTaskEntries, 0)
 
 	for rows.Next() {
 		task := new(model.Task)
-		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+		err := rows.Scan(&task.TaskId,
+			&task.TaskName,
+			&task.Notes,
+			&task.StartDate,
+			&task.EndDate,
+			&task.RequiredCompletionsNeeded,
+			&task.CompletionCount,
+			&task.IntervalBetweenWindowsCount,
+			&task.IntervalBetweenWindowsUnit,
+			&task.WindowDurationCount,
+			&task.WindowDurationUnit,
+			&task.TeamId,
+			&task.CreatorId,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+			&task.Status)
 		if err != nil {
 			return sendInternalServerErrorResponse(c, err)
 		}
-		tasks = append(tasks, task)
-	}
 
-	taskEntryQuery := database.TaskEntryGetByAssignedUserIdQuery
-	taskEntryStmt, err := database.DB.Prepare(taskEntryQuery)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer taskEntryStmt.Close()
-
-	taskEntries := make([]*model.TaskEntry, 0)
-
-	rows, err = taskEntryStmt.Query(currentUser.UserId)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	for rows.Next() {
-		taskEntry := new(model.TaskEntry)
-
-		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
+		taskEntries, err := getTaskEntriesByTaskId(task.TaskId)
 
 		if err != nil {
 			return sendInternalServerErrorResponse(c, err)
 		}
-		taskEntries = append(taskEntries, taskEntry)
+
+		creator, err := getUserById(task.CreatorId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		taskReturnWithTaskEntries := model.TaskReturnWithTaskEntries{
+			Task:        task,
+			TaskEntries: taskEntries,
+			Creator:     creator,
+		}
+
+		tasks = append(tasks, &taskReturnWithTaskEntries)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":     "Tasks retrieved successfully",
-		"tasks":       tasks,
-		"taskEntries": taskEntries,
-		"success":     true,
+		"message": "Tasks retrieved successfully",
+		"tasks":   tasks,
+		"success": true,
 	})
 }
 
