@@ -19,3 +19,11 @@ const UserGetUserByEmailQuery = `
 SELECT * FROM users
 WHERE email = $1;
 `
+
+const UserGetUsersByTeamIdQuery = `
+SELECT * FROM users
+WHERE user_id IN (
+  SELECT user_id FROM user_team_membership
+  WHERE team_id = $1
+);
+`

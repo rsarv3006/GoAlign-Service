@@ -9,6 +9,7 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
+// TODO: move to env
 var jwtKey = []byte("supersecretkey")
 
 type JWTClaims struct {

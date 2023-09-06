@@ -21,9 +21,9 @@ POST http://localhost:3000/api/auth/code
 Content-Type: application/json
 
 {
-  "login_code_request_id": "55a6063b-fe69-4aad-8bf1-30d7938572b9",
-  "user_id": "c9e94a86-3215-41dd-beb1-83430e7f3bbc",
-  "login_request_token": "W0F9EU"
+  "login_code_request_id": "272cdbe5-d4c6-4f43-a34f-cb124cdd5141",
+  "user_id": "8c0b68ab-3150-4a86-938f-c09f82c4a37e",
+  "login_request_token": "2G5MEM"
 }
 
 ### other test user
@@ -48,12 +48,12 @@ Content-Type: application/json
 ### get teams by current user
 GET http://localhost:3000/api/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTIxNTg3ODl9.jfgvH1ltwFmBfXlK_nbppplOzg395Dg6kV9u2C_LP0o
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
 
 ### create team
 POST http://localhost:3000/api/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTMxOTI5NjF9.Yo6ksSR-fOxxKTe4neqsORNAoRTeTqVe_aMIfw0MLLI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
 
 {
   "team_name": "waffles the og"
@@ -92,20 +92,20 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task
 POST http://localhost:3000/api/task/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI1YTQ4MzNiNS0xZTZkLTRkNTEtOGUxMS1iYzk4YWUwNTQ4NDUiLCJ1c2VyX25hbWUiOiJtZWVwIiwiZW1haWwiOiJtZWVwQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2V9LCJleHAiOjE2OTMxMTI2NTF9.qafn54Wm47HAucR0XH385cm5ikQ9aEmfsCx2xQ3G5dM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
 
 {
   "task_name": "waffles",
   "notes": "waffles are good",
   "required_completions_needed": 2,
-  "team_id": "8cf9decd-c699-4a67-875d-90849cb51e5c",
+  "team_id": "8497629d-6780-4324-8ca8-c2b445ddbfb0",
   "start_date": "2023-09-25T03:21:17Z",
   "interval_between_windows_count": 1,
   "interval_between_windows_unit": "day(s)",
   "window_duration_count": 1,
   "window_duration_unit": "day(s)",
   "status": "active",
-  "assigned_user_id": "5a4833b5-1e6d-4d51-8e11-bc98ae054845"
+  "assigned_user_id": "8c0b68ab-3150-4a86-938f-c09f82c4a37e"
 }
 
 ### update task

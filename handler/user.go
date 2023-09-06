@@ -4,8 +4,10 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
+	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func DeleteUserEndpoint(c *fiber.Ctx) error {
@@ -53,4 +55,53 @@ func DeleteUserEndpoint(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func getUsersByTeamId(teamId uuid.UUID) ([]model.User, error) {
+	query := database.UserGetUsersByTeamIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	var users []model.User
+
+	if err != nil {
+		return users, err
+	}
+
+	rows, err := stmt.Query(teamId)
+
+	if err != nil {
+		return users, err
+	}
+
+	for rows.Next() {
+		var user model.User
+		err := rows.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
+
+		if err != nil {
+			return users, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func getUserById(userId uuid.UUID) (model.User, error) {
+	query := database.UserGetUserByIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	var user model.User
+
+	if err != nil {
+		return user, err
+	}
+
+	err = stmt.QueryRow(userId).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }

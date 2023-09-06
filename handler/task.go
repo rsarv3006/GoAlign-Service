@@ -260,7 +260,7 @@ func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 	})
 }
 
-func getTasksByTeamId(teamId uuid.UUID) ([]model.Task, error) {
+func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, error) {
 	query := database.TaskGetTasksByTeamIdQuery
 	stmt, err := database.DB.Prepare(query)
 
@@ -276,7 +276,7 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.Task, error) {
 		return nil, err
 	}
 
-	tasks := []model.Task{}
+	tasks := []model.TaskReturnWithTaskEntries{}
 
 	for rows.Next() {
 		task := new(model.Task)
@@ -284,7 +284,26 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.Task, error) {
 		if err != nil {
 			return nil, err
 		}
-		tasks = append(tasks, *task)
+
+		taskEntries, err := getTaskEntriesByTaskId(task.TaskId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		creator, err := getUserById(task.CreatorId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskReturn := model.TaskReturnWithTaskEntries{
+			Task:        task,
+			Creator:     creator,
+			TaskEntries: taskEntries,
+		}
+
+		tasks = append(tasks, taskReturn)
 	}
 
 	return tasks, nil

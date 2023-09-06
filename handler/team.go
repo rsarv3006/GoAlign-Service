@@ -39,7 +39,7 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	teams := make([]model.Team, 0)
+	teams := make([]model.TeamReturnWithUsersAndTasks, 0)
 
 	for rows.Next() {
 		team := model.Team{}
@@ -54,11 +54,26 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 		)
 
 		if err != nil {
-			log.Error(err)
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		teams = append(teams, team)
+		teamUsers, err := getUsersByTeamId(team.TeamId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		teamTasks, err := getTasksByTeamId(team.TeamId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		teams = append(teams, model.TeamReturnWithUsersAndTasks{
+			Team:  &team,
+			Users: teamUsers,
+			Tasks: teamTasks,
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

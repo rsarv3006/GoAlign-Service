@@ -77,7 +77,7 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 	return taskEntry, nil
 }
 
-func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntry, error) {
+func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssignedUser, error) {
 	query := database.TaskEntryGetByTeamIdQuery
 	stmt, err := database.DB.Prepare(query)
 
@@ -87,7 +87,7 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntry, error) {
 
 	defer stmt.Close()
 
-	taskEntries := make([]model.TaskEntry, 0)
+	taskEntries := make([]model.TaskEntryReturnWithAssignedUser, 0)
 
 	rows, err := stmt.Query(teamId)
 
@@ -104,7 +104,18 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntry, error) {
 			return nil, err
 		}
 
-		taskEntries = append(taskEntries, *taskEntry)
+		assignedUser, err := getUserById(taskEntry.AssignedUserId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskEntryReturnWithCreator := model.TaskEntryReturnWithAssignedUser{
+			TaskEntry:    taskEntry,
+			AssignedUser: assignedUser,
+		}
+
+		taskEntries = append(taskEntries, taskEntryReturnWithCreator)
 	}
 
 	return taskEntries, nil
@@ -273,7 +284,7 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
-func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntry, error) {
+func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssignedUser, error) {
 	query := database.TaskEntriesGetByTaskIdQuery
 	stmt, err := database.DB.Prepare(query)
 
@@ -283,7 +294,7 @@ func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntry, error) {
 
 	defer stmt.Close()
 
-	taskEntries := make([]model.TaskEntry, 0)
+	taskEntries := make([]model.TaskEntryReturnWithAssignedUser, 0)
 
 	rows, err := stmt.Query(taskId)
 
@@ -300,7 +311,18 @@ func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntry, error) {
 			return nil, err
 		}
 
-		taskEntries = append(taskEntries, *taskEntry)
+		assignedUser, err := getUserById(taskEntry.AssignedUserId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskEntryReturnWithAssignedUser := model.TaskEntryReturnWithAssignedUser{
+			TaskEntry:    taskEntry,
+			AssignedUser: assignedUser,
+		}
+
+		taskEntries = append(taskEntries, taskEntryReturnWithAssignedUser)
 	}
 
 	return taskEntries, nil
