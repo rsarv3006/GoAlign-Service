@@ -219,7 +219,7 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Team invites for current user",
-		"data":    teamInvites,
+		"invites": teamInvites,
 	})
 }
 

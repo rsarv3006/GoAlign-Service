@@ -108,16 +108,37 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	intervalBetweenWindows := model.IntervalObj{}
+	windowDuration := model.IntervalObj{}
+
 	for rows.Next() {
-		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+		err := rows.Scan(&task.TaskId,
+			&task.TaskName,
+			&task.Notes,
+			&task.StartDate,
+			&task.EndDate,
+			&task.RequiredCompletionsNeeded,
+			&task.CompletionCount,
+			&intervalBetweenWindows.IntervalCount,
+			&intervalBetweenWindows.IntervalUnit,
+			&windowDuration.IntervalCount,
+			&windowDuration.IntervalUnit,
+			&task.TeamId,
+			&task.CreatorId,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+			&task.Status)
 		if err != nil {
 			return sendInternalServerErrorResponse(c, err)
 		}
 	}
 
+	task.IntervalBetweenWindows = intervalBetweenWindows
+	task.WindowDuration = windowDuration
+
 	endDateInterval := model.IntervalObj{}
-	endDateInterval.IntervalCount = task.WindowDurationCount
-	endDateInterval.IntervalUnit = model.IntervalVariant(task.WindowDurationUnit)
+	endDateInterval.IntervalCount = task.WindowDuration.IntervalCount
+	endDateInterval.IntervalUnit = model.IntervalVariant(task.WindowDuration.IntervalUnit)
 
 	endDate, err := helper.FindDateFromDateAndInterval(task.StartDate, endDateInterval)
 
@@ -177,6 +198,9 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 
 	for rows.Next() {
 		task := new(model.Task)
+		intervalBetweenWindows := model.IntervalObj{}
+		windowDuration := model.IntervalObj{}
+
 		err := rows.Scan(&task.TaskId,
 			&task.TaskName,
 			&task.Notes,
@@ -184,15 +208,19 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 			&task.EndDate,
 			&task.RequiredCompletionsNeeded,
 			&task.CompletionCount,
-			&task.IntervalBetweenWindowsCount,
-			&task.IntervalBetweenWindowsUnit,
-			&task.WindowDurationCount,
-			&task.WindowDurationUnit,
+			&intervalBetweenWindows.IntervalCount,
+			&intervalBetweenWindows.IntervalUnit,
+			&windowDuration.IntervalCount,
+			&windowDuration.IntervalUnit,
 			&task.TeamId,
 			&task.CreatorId,
 			&task.CreatedAt,
 			&task.UpdatedAt,
 			&task.Status)
+
+		task.IntervalBetweenWindows = intervalBetweenWindows
+		task.WindowDuration = windowDuration
+
 		if err != nil {
 			return sendInternalServerErrorResponse(c, err)
 		}
@@ -285,10 +313,32 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, erro
 
 	for rows.Next() {
 		task := new(model.Task)
-		err := rows.Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+		intervalBetweenWindows := model.IntervalObj{}
+		windowDuration := model.IntervalObj{}
+
+		err := rows.Scan(&task.TaskId,
+			&task.TaskName,
+			&task.Notes,
+			&task.StartDate,
+			&task.EndDate,
+			&task.RequiredCompletionsNeeded,
+			&task.CompletionCount,
+			&intervalBetweenWindows.IntervalCount,
+			&intervalBetweenWindows.IntervalUnit,
+			&windowDuration.IntervalCount,
+			&windowDuration.IntervalUnit,
+			&task.TeamId,
+			&task.CreatorId,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+			&task.Status)
+
 		if err != nil {
 			return nil, err
 		}
+
+		task.IntervalBetweenWindows = intervalBetweenWindows
+		task.WindowDuration = windowDuration
 
 		taskEntries, err := getTaskEntriesByTaskId(task.TaskId)
 
@@ -482,11 +532,33 @@ func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 	defer stmt.Close()
 
 	task := new(model.Task)
-	err = stmt.QueryRow(taskId).Scan(&task.TaskId, &task.TaskName, &task.Notes, &task.StartDate, &task.EndDate, &task.RequiredCompletionsNeeded, &task.CompletionCount, &task.IntervalBetweenWindowsCount, &task.IntervalBetweenWindowsUnit, &task.WindowDurationCount, &task.WindowDurationUnit, &task.TeamId, &task.CreatorId, &task.CreatedAt, &task.UpdatedAt, &task.Status)
+
+	intervalBetweenWindows := model.IntervalObj{}
+	windowDuration := model.IntervalObj{}
+
+	err = stmt.QueryRow(taskId).Scan(&task.TaskId,
+		&task.TaskName,
+		&task.Notes,
+		&task.StartDate,
+		&task.EndDate,
+		&task.RequiredCompletionsNeeded,
+		&task.CompletionCount,
+		&intervalBetweenWindows.IntervalCount,
+		&intervalBetweenWindows.IntervalUnit,
+		&windowDuration.IntervalCount,
+		&windowDuration.IntervalUnit,
+		&task.TeamId,
+		&task.CreatorId,
+		&task.CreatedAt,
+		&task.UpdatedAt,
+		&task.Status)
 
 	if err != nil {
 		return nil, err
 	}
+
+	task.IntervalBetweenWindows = intervalBetweenWindows
+	task.WindowDuration = windowDuration
 
 	return task, nil
 }
