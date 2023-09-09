@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,6 +28,7 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
+	log.Println(taskDto)
 	taskName := helper.SanitizeInput(taskDto.TaskName)
 
 	if taskName == "" {
@@ -53,24 +55,27 @@ func CreateTask(c *fiber.Ctx) error {
 	if requiredCompletionsNeeded != nil && *requiredCompletionsNeeded < 0 {
 		err := errors.New("Required completions needed cannot be negative")
 		return sendBadRequestResponse(c, err, "Required completions needed cannot be negative")
+	} else if requiredCompletionsNeeded == nil {
+		requiredCompletionsNeeded = new(int)
+		*requiredCompletionsNeeded = -1
 	}
 
-	if taskDto.IntervalBetweenWindowsCount < 0 {
+	if taskDto.IntervalBetweenWindows.IntervalCount < 0 {
 		err := errors.New("Interval between windows count cannot be negative")
 		return sendBadRequestResponse(c, err, "Interval between windows count cannot be negative")
 	}
 
-	if taskDto.WindowDurationCount < 0 {
+	if taskDto.WindowDuration.IntervalCount < 0 {
 		err := errors.New("Window duration count cannot be negative")
 		return sendBadRequestResponse(c, err, "Window duration count cannot be negative")
 	}
 
-	if !model.IsValidVariant(taskDto.IntervalBetweenWindowsUnit) {
+	if !model.IsValidVariant(string(taskDto.IntervalBetweenWindows.IntervalUnit)) {
 		err := errors.New("Interval between windows unit is invalid")
 		return sendBadRequestResponse(c, err, "Interval between windows unit is invalid")
 	}
 
-	if !model.IsValidVariant(taskDto.WindowDurationUnit) {
+	if !model.IsValidVariant(string(taskDto.WindowDuration.IntervalUnit)) {
 		err := errors.New("Window duration unit is invalid")
 		return sendBadRequestResponse(c, err, "Window duration unit is invalid")
 	}
@@ -102,7 +107,20 @@ func CreateTask(c *fiber.Ctx) error {
 
 	task := new(model.Task)
 
-	rows, err := stmt.Query(taskName, notes, taskDto.StartDate, taskDto.EndDate, requiredCompletionsNeeded, taskDto.IntervalBetweenWindowsCount, taskDto.IntervalBetweenWindowsUnit, taskDto.WindowDurationCount, taskDto.WindowDurationUnit, taskDto.TeamId, currentUser.UserId, taskDto.Status)
+	rows, err := stmt.Query(
+		taskName,
+		notes,
+		taskDto.StartDate,
+		taskDto.EndDate,
+		requiredCompletionsNeeded,
+		taskDto.IntervalBetweenWindows.IntervalCount,
+		taskDto.IntervalBetweenWindows.IntervalUnit,
+		taskDto.WindowDuration.IntervalCount,
+		taskDto.WindowDuration.IntervalUnit,
+		taskDto.TeamId,
+		currentUser.UserId,
+		taskDto.Status,
+	)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)

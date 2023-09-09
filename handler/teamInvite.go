@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
+	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
@@ -31,6 +32,12 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
+	}
+
+	isValidEmailAddress := helper.IsValidEmailAddress(teamInviteCreateDto.Email)
+
+	if !isValidEmailAddress {
+		return sendBadRequestResponse(c, errors.New("Invalid email address"), "Invalid email address")
 	}
 
 	_, err = stmt.Exec(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email, currentUser.UserId)

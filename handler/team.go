@@ -83,26 +83,34 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 }
 
 func CreateTeam(c *fiber.Ctx) error {
+	log.Info("CreateTeam")
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	log.Info("CreateTeam 2")
 	currentUser, err := auth.ValidateToken(token)
+	log.Info("CreateTeam 3")
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
 	}
 
+	log.Info("CreateTeam 4")
 	teamDto := new(model.TeamCreateDto)
 
+	log.Info("CreateTeam 5")
 	if err := c.BodyParser(teamDto); err != nil {
 		return sendBadRequestResponse(c, err, "Unable to parse team create dto")
 	}
 
+	log.Info("CreateTeam 6")
 	if teamDto.TeamName == "" {
 		return sendBadRequestResponse(c, err, "Team name is required")
 	}
 
+	log.Info("CreateTeam 7")
 	query := database.TeamCreateQueryString
 	stmt, err := database.DB.Prepare(query)
 
+	log.Info("CreateTeam 8")
 	if err != nil {
 		switch e := err.(type) {
 		case *pq.Error:
@@ -116,11 +124,14 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 	defer stmt.Close()
 
+	log.Info("CreateTeam 9")
 	team := new(model.Team)
 
+	log.Info("CreateTeam 10")
 	cleanedTeamName := helper.SanitizeInput(teamDto.TeamName)
 	rows, err := stmt.Query(cleanedTeamName, currentUser.UserId, currentUser.UserId)
 
+	log.Info("CreateTeam 11")
 	if err != nil {
 		switch e := err.(type) {
 		case *pq.Error:
@@ -133,6 +144,7 @@ func CreateTeam(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "")
 	}
 
+	log.Info("CreateTeam 12")
 	for rows.Next() {
 		err := rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
 		if err != nil {
@@ -141,10 +153,26 @@ func CreateTeam(c *fiber.Ctx) error {
 		}
 	}
 
-	userTeamMembership, err := CreateUserTeamMembership(currentUser.UserId, team.TeamId)
+	log.Info("CreateTeam 13")
+	_, err = CreateUserTeamMembership(currentUser.UserId, team.TeamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
+	}
+
+	log.Info("Spot 1")
+	teamUsers := make([]model.User, 0)
+	log.Info("Spot 2")
+	teamUsers = append(teamUsers, *currentUser)
+
+	log.Info("Spot 3")
+	teamTasks := make([]model.TaskReturnWithTaskEntries, 0)
+
+	log.Info("Spot 4")
+	teamReturn := model.TeamReturnWithUsersAndTasks{
+		Team:  team,
+		Users: teamUsers,
+		Tasks: teamTasks,
 	}
 
 	teamSettingsDto := new(model.TeamSettingsCreateDto)
@@ -159,8 +187,7 @@ func CreateTeam(c *fiber.Ctx) error {
 	return c.Status(201).JSON(&fiber.Map{
 		"success":  true,
 		"message":  "Team created successfully",
-		"team":     team,
-		"members":  userTeamMembership,
+		"team":     teamReturn,
 		"settings": teamSettings,
 	})
 }

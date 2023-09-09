@@ -33,6 +33,7 @@ func sendInternalServerErrorResponse(c *fiber.Ctx, err error) error {
 }
 
 func sendBadRequestResponse(c *fiber.Ctx, err error, message string) error {
+	log.Println(err)
 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 		"message": message,
 		"error":   err,
