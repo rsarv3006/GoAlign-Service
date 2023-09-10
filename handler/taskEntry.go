@@ -11,7 +11,7 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
-func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId uuid.UUID) (*model.TaskEntry, error) {
+func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId uuid.UUID) (*model.TaskEntryReturnWithAssignedUser, error) {
 	task, err := getTaskByTaskId(taskEntryCreateDto.TaskId)
 
 	if err != nil {
@@ -74,7 +74,18 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 		}
 	}
 
-	return taskEntry, nil
+	assignedUser, err := getUserById(taskEntry.AssignedUserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskEntryReturnWithAssignedUser := model.TaskEntryReturnWithAssignedUser{
+		TaskEntry:    taskEntry,
+		AssignedUser: assignedUser,
+	}
+
+	return &taskEntryReturnWithAssignedUser, nil
 }
 
 func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssignedUser, error) {
@@ -195,7 +206,6 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Task Entry Marked Complete",
-		"success": true,
 	})
 }
 

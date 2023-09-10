@@ -185,14 +185,13 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(&fiber.Map{
-		"success":  true,
 		"message":  "Team created successfully",
 		"team":     teamReturn,
 		"settings": teamSettings,
 	})
 }
 
-func getTeamById(teamId uuid.UUID) (*model.Team, error) {
+func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
 	query := database.TeamGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
 
@@ -207,7 +206,25 @@ func getTeamById(teamId uuid.UUID) (*model.Team, error) {
 		return nil, err
 	}
 
-	return team, nil
+	teamUsers, err := getUsersByTeamId(team.TeamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamTasks, err := getTasksByTeamId(team.TeamId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teamReturn := model.TeamReturnWithUsersAndTasks{
+		Team:  team,
+		Users: teamUsers,
+		Tasks: teamTasks,
+	}
+
+	return &teamReturn, nil
 }
 
 func DeleteTeam(c *fiber.Ctx) error {
@@ -340,8 +357,7 @@ func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(&fiber.Map{
-		"success": true,
-		"team":    team,
+		"team": team,
 	})
 }
 
@@ -402,7 +418,6 @@ func UpdateTeamManagerEndpoint(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(&fiber.Map{
-		"success": true,
 		"message": "Team manager updated successfully",
 	})
 }

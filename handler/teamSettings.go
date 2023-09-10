@@ -123,7 +123,6 @@ func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
 	}
 
 	return c.Status(201).JSON(&fiber.Map{
-		"success":  true,
 		"settings": teamSettings,
 	})
 }
@@ -155,4 +154,43 @@ func getTeamSettingsByTeamId(teamId uuid.UUID) (*model.TeamSettings, error) {
 	}
 
 	return teamSettings, nil
+}
+
+func GetTeamSettingsByTeamIdEndpoint(c *fiber.Ctx) error {
+	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
+	currentUser, err := auth.ValidateToken(token)
+
+	if err != nil {
+		return sendUnauthorizedResponse(c)
+	}
+
+	teamId, err := uuid.Parse(c.Params("teamId"))
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid team id")
+	}
+
+	isUserInTeam, err := isUserInTeam(currentUser.UserId, teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if !isUserInTeam {
+		return sendForbiddenResponse(c)
+	}
+
+	teamSettings, err := getTeamSettingsByTeamId(teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if teamSettings == nil {
+		return sendNotFoundResponse(c, "Team settings not found")
+	}
+
+	return c.Status(200).JSON(&fiber.Map{
+		"settings": teamSettings,
+	})
 }

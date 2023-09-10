@@ -347,7 +347,7 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	teamInvites := make([]model.TeamInvite, 0)
+	teamInvites := make([]model.TeamInviteReturnWithCreator, 0)
 
 	for rows.Next() {
 		var teamInvite model.TeamInvite
@@ -357,11 +357,28 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		teamInvites = append(teamInvites, teamInvite)
+		teamInviteCreator, err := getUserById(teamInvite.InviteCreatorId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		team, err := getTeamById(teamInvite.TeamId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		teamInviteReturnWithCreator := model.TeamInviteReturnWithCreator{
+			TeamInvite:    &teamInvite,
+			Team:          *team,
+			InviteCreator: teamInviteCreator,
+		}
+
+		teamInvites = append(teamInvites, teamInviteReturnWithCreator)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"status":      "success",
 		"message":     "Team invites by team id",
 		"teamInvites": teamInvites,
 	})

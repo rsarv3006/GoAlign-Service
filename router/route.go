@@ -7,6 +7,9 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/middleware"
 )
 
+// TODO: Add api versioning to routes
+// TODO: on login route add timeout if a request has been made recently
+
 // SetupRoutes func
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
@@ -42,7 +45,8 @@ func setUpTeamRoutes(api fiber.Router) {
 	team.Get("/:teamId", handler.GetTeamByTeamIdEndpoint)
 	team.Post("/removeUserFromTeam/:teamId/:userId", handler.RemoveUserFromTeamEndpoint)
 	team.Post("/updateTeamManager/:teamId/:teamManagerId", handler.UpdateTeamManagerEndpoint)
-	team.Post("/updateTeamSettings/:teamId", handler.UpdateTeamSettingsEndpoint)
+	team.Put("/:teamId/settings", handler.UpdateTeamSettingsEndpoint)
+	team.Get("/:teamId/settings", handler.GetTeamSettingsByTeamIdEndpoint)
 }
 
 func setUpTaskRoutes(api fiber.Router) {

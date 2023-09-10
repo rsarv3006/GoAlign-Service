@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -23,9 +22,6 @@ func CreateUserTeamMembership(userId uuid.UUID, teamId uuid.UUID) (*model.UserTe
 	defer stmt.Close()
 
 	userTeamMembership := new(model.UserTeamMembership)
-
-	log.Println(userId)
-	log.Println(teamId)
 
 	rows, err := stmt.Query(userId, teamId)
 

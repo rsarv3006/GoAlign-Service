@@ -3,7 +3,6 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -28,7 +27,6 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
-	log.Println(taskDto)
 	taskName := helper.SanitizeInput(taskDto.TaskName)
 
 	if taskName == "" {
@@ -181,11 +179,14 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	taskObjToReturn := new(model.TaskReturnWithTaskEntries)
+	taskObjToReturn.Task = task
+	taskObjToReturn.TaskEntries = append(taskObjToReturn.TaskEntries, *taskEntry)
+	taskObjToReturn.Creator = *currentUser
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message":   "Task created successfully",
-		"task":      task,
-		"taskEntry": taskEntry,
-		"success":   true,
+		"message": "Task created successfully",
+		"task":    taskObjToReturn,
 	})
 }
 
@@ -267,7 +268,6 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Tasks retrieved successfully",
 		"tasks":   tasks,
-		"success": true,
 	})
 }
 
@@ -294,7 +294,6 @@ func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 	if !isUserInTeam {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Forbidden",
-			"success": false,
 		})
 	}
 
@@ -307,7 +306,6 @@ func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Tasks retrieved successfully",
 		"tasks":   tasks,
-		"success": true,
 	})
 }
 
@@ -443,7 +441,6 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"message": "Task not found",
 				"error":   err,
-				"success": false,
 			})
 		}
 
@@ -459,7 +456,6 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 	if !isUserTheTeamManager {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Forbidden",
-			"success": false,
 		})
 	}
 
@@ -512,7 +508,6 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 		if err == sql.ErrNoRows {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"message": "Task not found",
-				"success": false,
 			})
 		}
 
@@ -528,14 +523,12 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 	if !isUserInTeam {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"message": "Forbidden",
-			"success": false,
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Task retrieved successfully",
 		"task":    task,
-		"success": true,
 	})
 }
 
@@ -633,6 +626,5 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Task updated successfully",
-		"success": true,
 	})
 }

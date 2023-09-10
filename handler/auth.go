@@ -65,7 +65,7 @@ func Register(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"success": true, "login_request_id": loginRequest.LoginRequestId, "user_id": loginRequest.UserId})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"login_request_id": loginRequest.LoginRequestId, "user_id": loginRequest.UserId})
 }
 
 func Login(c *fiber.Ctx) error {
@@ -162,6 +162,7 @@ func FetchCode(c *fiber.Ctx) error {
 		return sendUnauthorizedResponse(c)
 	}
 
+	// TODO: convert to prepared statement
 	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE user_id = $1", loginRequest.UserId)
 
 	if errFromDb != nil {
@@ -258,6 +259,7 @@ func generateUniqueLoginCode() (string, error) {
 		attempts++
 
 		loginCode := helper.GenerateCodeHelper()
+		// TODO: convert to prepared statement
 		rows, err := database.DB.Query("SELECT * FROM login_requests WHERE login_request_token = $1", loginCode)
 
 		if err != nil {
