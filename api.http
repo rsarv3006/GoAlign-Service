@@ -180,8 +180,8 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
 
 {
-  "team_id": "8497629d-6780-4324-8ca8-c2b445ddbfb0",
-  "email": "waffles@aredelicious.foodie"
+  "team_id": "d0f67a8f-c087-413a-897d-8c3a4b6cc9fb",
+  "email": "Waffles@awaffles.test"
 }
 
 ### get team invites by current user
@@ -191,12 +191,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 
 
 ### accept team invite
-POST http://localhost:3000/api/team-invite/accept/bee02df3-d67d-4259-b4e1-66060257cd61
+POST http://localhost:3000/api/team-invite/bee02df3-d67d-4259-b4e1-66060257cd61/accept
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJlMDgwNDkxNS0zYjNjLTQ3MzItYTgwNS05OGIxYjI1YzM1NzAiLCJ1c2VyX25hbWUiOiJpbGlrZXdhZmZsZXMiLCJlbWFpbCI6IndhZmZsZXNAYXJlZGVsaWNpb3VzLmZvb2RpZSIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfSwiZXhwIjoxNjkyNDk4NTM1fQ.Mj4j4msYX3S4b12-wGlr3Enk4wrxMXm-lbd2qQ6jQSU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
 
 ### decline team invite
-POST http://localhost:3000/api/team-invite/decline/bee02df3-d67d-4259-b4e1-66060257cd60
+POST http://localhost:3000/api/team-invite/bee02df3-d67d-4259-b4e1-66060257cd60/decline
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjZmE2MWVhZC0zZDkxLTRjZTctOTcxZC1kNGM0NzkwMjVhZWIiLCJ1c2VyX25hbWUiOiJpbGlrZXdhZmZsZXMiLCJlbWFpbCI6IndhZmZsZXNAYXJlZGVsaWNpb3VzLmZvb2RpZSIsImlzX2FjdGl2ZSI6dHJ1ZSwiaXNfZW1haWxfdmVyaWZpZWQiOmZhbHNlfSwiZXhwIjoxNjkyNzYwNTY4fQ.OS2s0pxB7EYnz9BUp9HXUKApWF1bD4TuVDIUVqt-frY
 

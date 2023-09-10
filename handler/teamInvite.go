@@ -14,6 +14,9 @@ import (
 )
 
 func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
+	// TODO: Add check if email address to invite is already in the team
+	// TODO: Check if email already has a pending invite for that team
+
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
 
@@ -211,7 +214,7 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	teamInvites := make([]model.TeamInvite, 0)
+	teamInvites := make([]model.TeamInviteReturnWithCreator, 0)
 
 	for rows.Next() {
 		var teamInvite model.TeamInvite
@@ -221,7 +224,25 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		teamInvites = append(teamInvites, teamInvite)
+		teamInviteCreator, err := getUserById(teamInvite.InviteCreatorId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		team, err := getTeamById(teamInvite.TeamId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		teamInviteReturnWithCreator := model.TeamInviteReturnWithCreator{
+			TeamInvite:    &teamInvite,
+			InviteCreator: teamInviteCreator,
+			Team:          *team,
+		}
+
+		teamInvites = append(teamInvites, teamInviteReturnWithCreator)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{

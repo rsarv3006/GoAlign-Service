@@ -14,7 +14,7 @@ RETURNING *
 
 const TeamInvitesForCurrentUserQueryString = `
 SELECT * FROM team_invites
-WHERE email = $1
+WHERE email = $1 AND status = 'pending'
 ;
 `
 

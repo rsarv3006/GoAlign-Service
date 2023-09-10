@@ -89,8 +89,8 @@ func setUpTeamInviteRoutes(api fiber.Router) {
 
 	teamInvites.Post("/", handler.CreateTeamInviteEndpoint)
 	teamInvites.Get("/", handler.GetTeamInvitesForCurrentUserEndpoint)
-	teamInvites.Post("/accept/:teamInviteId", handler.AcceptTeamInviteEndpoint)
-	teamInvites.Post("/decline/:teamInviteId", handler.DeclineTeamInviteEndpoint)
+	teamInvites.Post("/:teamInviteId/accept", handler.AcceptTeamInviteEndpoint)
+	teamInvites.Post("/:teamInviteId/decline", handler.DeclineTeamInviteEndpoint)
 	teamInvites.Get("/byTeam/:teamId", handler.GetTeamInvitesByTeamIdEndpoint)
 	teamInvites.Delete("/:teamInviteId", handler.DeleteTeamInviteEndpoint)
 }
