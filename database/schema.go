@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   creator_id uuid NOT NULL REFERENCES users(user_id),
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW(),
-  status varchar NOT NULL
+  status varchar NOT NULL DEFAULT 'active'
 );
   `)
 

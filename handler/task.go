@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -54,6 +55,7 @@ func CreateTask(c *fiber.Ctx) error {
 		err := errors.New("Required completions needed cannot be negative")
 		return sendBadRequestResponse(c, err, "Required completions needed cannot be negative")
 	} else if requiredCompletionsNeeded == nil {
+		// TODO: Is there a better way to do this?
 		requiredCompletionsNeeded = new(int)
 		*requiredCompletionsNeeded = -1
 	}
@@ -117,7 +119,6 @@ func CreateTask(c *fiber.Ctx) error {
 		taskDto.WindowDuration.IntervalUnit,
 		taskDto.TeamId,
 		currentUser.UserId,
-		taskDto.Status,
 	)
 
 	if err != nil {
@@ -627,4 +628,64 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Task updated successfully",
 	})
+}
+
+func incrementTaskCompletionCount(taskId uuid.UUID) error {
+	query := database.TaskIncrementCompletionCountQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func canTaskBeMarkedAsComplete(taskId uuid.UUID) (bool, error) {
+	task, err := getTaskByTaskId(taskId)
+
+	if err != nil {
+		return false, err
+	}
+
+	if task.RequiredCompletionsNeeded == -1 {
+		return false, nil
+	}
+
+	if task.CompletionCount >= task.RequiredCompletionsNeeded {
+		return true, nil
+	}
+
+	if task.EndDate != nil && task.EndDate.Before(time.Now()) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func markTaskAsComplete(taskId uuid.UUID) error {
+	query := database.TaskMarkTaskAsCompleteQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

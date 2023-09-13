@@ -197,17 +197,3 @@ func RemoveUserFromTeamEndpoint(c *fiber.Ctx) error {
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
-
-func getTeamMembersByTeamId(teamId uuid.UUID) ([]model.User, error) {
-	// userTeamMemberships, err := getUserTeamMemberships(teamId)
-
-	// if err != nil {
-	// return nil, err
-	// }
-
-	// userIds := make([]uuid.UUID, len(userTeamMemberships))
-
-	// return users, nil
-
-	return nil, nil
-}

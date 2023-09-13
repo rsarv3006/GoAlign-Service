@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
+	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
@@ -159,7 +160,12 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 		return sendUnauthorizedResponse(c)
 	}
 
-	taskEntryId := c.Params("taskEntryId")
+	taskEntryIdString := c.Params("taskEntryId")
+	taskEntryId, err := uuid.Parse(taskEntryIdString)
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid Task Entry Id")
+	}
 
 	taskEntryToMarkComplete, err := getTaskEntryByTaskEntryId(taskEntryId)
 
@@ -202,14 +208,50 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	// TODO: assign task to next user in the queue
+	err = incrementTaskCompletionCount(task.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	canTaskBeMarkedAsComplete, err := canTaskBeMarkedAsComplete(task.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if canTaskBeMarkedAsComplete {
+		err = markTaskAsComplete(task.TaskId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+
+		}
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"message": "Task Marked Complete",
+		})
+	}
+
+	nextUserId, err := determineNextUserToAssignTaskTo(task.TaskId, taskEntryId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	newTaskEntry, err := createTaskEntryFromPreviousTaskEntry(taskEntryId, *nextUserId, currentUser.UserId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Task Entry Marked Complete",
+		"message":      "Task Entry Marked Complete",
+		"newTaskEntry": newTaskEntry,
 	})
+
 }
 
-func getTaskEntryByTaskEntryId(taskEntryId string) (*model.TaskEntry, error) {
+func getTaskEntryByTaskEntryId(taskEntryId uuid.UUID) (*model.TaskEntry, error) {
 	query := database.TaskEntryGetByTaskEntryIdQuery
 	stmt, err := database.DB.Prepare(query)
 
@@ -246,7 +288,13 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 		return sendUnauthorizedResponse(c)
 	}
 
-	taskEntryId := c.Params("taskEntryId")
+	taskEntryIdString := c.Params("taskEntryId")
+
+	taskEntryId, err := uuid.Parse(taskEntryIdString)
+
+	if err != nil {
+		return sendBadRequestResponse(c, err, "Invalid Task Entry Id")
+	}
 
 	taskEntryToCancel, err := getTaskEntryByTaskEntryId(taskEntryId)
 
@@ -281,15 +329,39 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	defer stmt.Close()
-
 	_, err = stmt.Exec(taskEntryId)
+
+	defer stmt.Close()
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	// TODO: assign task to next user in the queue
+	canTaskBeMarkedAsComplete, err := canTaskBeMarkedAsComplete(task.TaskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if canTaskBeMarkedAsComplete {
+		err := markTaskAsComplete(task.TaskId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+	} else {
+		userIdForNextTaskEntry, err := determineNextUserToAssignTaskTo(task.TaskId, taskEntryId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		_, err = createTaskEntryFromPreviousTaskEntry(taskEntryId, *userIdForNextTaskEntry, currentUser.UserId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+	}
 
 	return c.SendStatus(fiber.StatusNoContent)
 }
@@ -338,21 +410,109 @@ func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 	return taskEntries, nil
 }
 
-// func determineNextUserToAssignTaskTo(taskId uuid.UUID) (*model.TaskEntry, error) {
-// 	// TODO: implement this function with round robin user assignment
+func determineNextUserToAssignTaskTo(taskId uuid.UUID, taskEntryId uuid.UUID) (*uuid.UUID, error) {
+	task, err := getTaskByTaskId(taskId)
 
-// 	task, err := getTaskByTaskId(taskId)
+	if err != nil {
+		return nil, err
+	}
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-// 	taskEntries, err := getTaskEntriesByTaskId(taskId)
+	teamMembers, err := getUsersByTeamId(task.TeamId)
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-//   teamMembers, err := getTeamMembersByTeamId(task.TeamId)
-// 	return nil, nil
-// }
+	if len(teamMembers) == 1 {
+		return &teamMembers[0].UserId, nil
+	}
+
+	taskEntries, err := getTaskEntriesByTaskId(taskId)
+
+	currentTaskEntry := model.TaskEntryReturnWithAssignedUser{}
+
+	for _, taskEntry := range taskEntries {
+		if taskEntry.TaskEntryId == taskEntryId {
+			currentTaskEntry = taskEntry
+		}
+	}
+
+	if currentTaskEntry.Status == "" {
+		return nil, errors.New("Task Entry not found")
+	}
+
+	if currentTaskEntry.Status == "completed" {
+		return nil, errors.New("Task Entry is already marked complete")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	memberTaskEntryCountMap := make(map[uuid.UUID]int)
+
+	for _, taskEntry := range taskEntries {
+		if taskEntry.Status == "completed" {
+			memberTaskEntryCountMap[taskEntry.AssignedUser.UserId]++
+		}
+	}
+
+	delete(memberTaskEntryCountMap, currentTaskEntry.AssignedUserId)
+
+	var minTaskEntryCount int
+	var minTaskEntryCountUserId uuid.UUID
+
+	for userId, taskEntryCount := range memberTaskEntryCountMap {
+		if taskEntryCount < minTaskEntryCount {
+			minTaskEntryCount = taskEntryCount
+			minTaskEntryCountUserId = userId
+		}
+	}
+
+	return &minTaskEntryCountUserId, nil
+}
+
+func createTaskEntryFromPreviousTaskEntry(
+	previousTaskEntryId uuid.UUID,
+	nextAssignedUserId uuid.UUID,
+	currentUserId uuid.UUID) (*model.TaskEntryReturnWithAssignedUser, error) {
+	previousTaskEntry, err := getTaskEntryByTaskEntryId(previousTaskEntryId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	task, err := getTaskByTaskId(previousTaskEntry.TaskId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	startDate, err := helper.FindDateFromDateAndInterval(previousTaskEntry.EndDate, task.IntervalBetweenWindows)
+
+	if err != nil {
+		return nil, err
+	}
+
+	endDate, err := helper.FindDateFromDateAndInterval(startDate, task.WindowDuration)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskEntryCreateDto := model.TaskEntryCreateDto{
+		StartDate:      startDate,
+		EndDate:        endDate,
+		Notes:          "",
+		AssignedUserId: nextAssignedUserId,
+		TaskId:         previousTaskEntry.TaskId,
+	}
+
+	newTaskEntry, err := createTaskEntry(&taskEntryCreateDto, currentUserId)
+
+	return newTaskEntry, err
+}

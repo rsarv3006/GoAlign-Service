@@ -7,7 +7,6 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/middleware"
 )
 
-// TODO: Add api versioning to routes
 // TODO: on login route add timeout if a request has been made recently
 
 // SetupRoutes func
@@ -25,7 +24,7 @@ func SetupRoutes(app *fiber.App) {
 }
 
 func setupAuthRoutes(api fiber.Router) {
-	auth := api.Group("/auth", logger.New())
+	auth := api.Group("/v1/auth", logger.New())
 
 	auth.Post("/register", handler.Register)
 	auth.Post("/login", handler.Login)
@@ -34,7 +33,7 @@ func setupAuthRoutes(api fiber.Router) {
 }
 
 func setUpTeamRoutes(api fiber.Router) {
-	team := api.Group("/team", logger.New())
+	team := api.Group("/v1/team", logger.New())
 
 	team.Use(logger.New())
 	team.Use(middleware.IsExpired())
@@ -43,14 +42,14 @@ func setUpTeamRoutes(api fiber.Router) {
 	team.Get("/", handler.GetTeamsForCurrentUser)
 	team.Delete("/:id", handler.DeleteTeam)
 	team.Get("/:teamId", handler.GetTeamByTeamIdEndpoint)
-	team.Post("/removeUserFromTeam/:teamId/:userId", handler.RemoveUserFromTeamEndpoint)
+	team.Delete("/:teamId/removeUserFromTeam/:userId", handler.RemoveUserFromTeamEndpoint)
 	team.Post("/updateTeamManager/:teamId/:teamManagerId", handler.UpdateTeamManagerEndpoint)
 	team.Put("/:teamId/settings", handler.UpdateTeamSettingsEndpoint)
 	team.Get("/:teamId/settings", handler.GetTeamSettingsByTeamIdEndpoint)
 }
 
 func setUpTaskRoutes(api fiber.Router) {
-	task := api.Group("/task", logger.New())
+	task := api.Group("/v1/task", logger.New())
 
 	task.Use(logger.New())
 	task.Use(middleware.IsExpired())
@@ -64,7 +63,7 @@ func setUpTaskRoutes(api fiber.Router) {
 }
 
 func setUpTaskEntryRoutes(api fiber.Router) {
-	taskEntry := api.Group("/task-entry", logger.New())
+	taskEntry := api.Group("/v1/task-entry", logger.New())
 
 	taskEntry.Use(logger.New())
 	taskEntry.Use(middleware.IsExpired())
@@ -74,7 +73,7 @@ func setUpTaskEntryRoutes(api fiber.Router) {
 }
 
 func setUpStatsRoutes(api fiber.Router) {
-	stats := api.Group("/stats", logger.New())
+	stats := api.Group("/v1/stats", logger.New())
 
 	stats.Use(logger.New())
 	stats.Use(middleware.IsExpired())
@@ -83,7 +82,7 @@ func setUpStatsRoutes(api fiber.Router) {
 }
 
 func setUpTeamInviteRoutes(api fiber.Router) {
-	teamInvites := api.Group("/team-invite", logger.New())
+	teamInvites := api.Group("/v1/team-invite", logger.New())
 
 	teamInvites.Use(middleware.IsExpired())
 
@@ -96,7 +95,7 @@ func setUpTeamInviteRoutes(api fiber.Router) {
 }
 
 func setUpUserRoutes(api fiber.Router) {
-	user := api.Group("/user", logger.New())
+	user := api.Group("/v1/user", logger.New())
 
 	user.Use(logger.New())
 	user.Use(middleware.IsExpired())
@@ -105,7 +104,7 @@ func setUpUserRoutes(api fiber.Router) {
 }
 
 func setUpLoggingRoutes(api fiber.Router) {
-	log := api.Group("/log", logger.New())
+	log := api.Group("/v1/log", logger.New())
 
 	log.Use(logger.New())
 	log.Use(middleware.IsExpired())

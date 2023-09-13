@@ -12,8 +12,7 @@ INSERT INTO tasks (
   window_duration_count,
   window_duration_unit,
   team_id,
-  creator_id,
-  status  
+  creator_id
 ) VALUES (
   $1, 
   $2,
@@ -25,8 +24,7 @@ INSERT INTO tasks (
   $8,
   $9,
   $10,
-  $11,
-  $12
+  $11
 )
 RETURNING *
 ;`
@@ -72,5 +70,19 @@ SET
   window_duration_count = $8,
   window_duration_unit = $9
 WHERE task_id = $10
+RETURNING *
+`
+
+const TaskMarkTaskAsCompleteQuery = `
+UPDATE tasks
+SET status = 'completed'
+WHERE task_id = $1
+RETURNING *
+`
+
+const TaskIncrementCompletionCountQuery = `
+UPDATE tasks
+SET completion_count = completion_count + 1
+WHERE task_id = $1
 RETURNING *
 `
