@@ -21,13 +21,13 @@ POST http://localhost:3000/api/v1/auth/code
 Content-Type: application/json
 
 {
-  "login_code_request_id": "00be124f-7b8a-4dfd-ab03-67759bfdc3b9",
+  "login_code_request_id": "68fc4006-a966-42c4-b0b1-ec89a57387d3",
   "user_id": "c0356d25-e386-484e-b825-a5270808ecb4",
-  "login_request_token": "W3UWWL"
+  "login_request_token": "AK70NF"
 }
 
 ### other test user
-POST http://localhost:3000/api/auth/register
+POST http://localhost:3000/api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -97,7 +97,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task
 POST http://localhost:3000/api/v1/task/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjMDM1NmQyNS1lMzg2LTQ4NGUtYjgyNS1hNTI3MDgwOGVjYjQiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMTJUMjI6NTM6MjkuMjI2NTU5WiJ9LCJleHAiOjE2OTQ1ODA4NzN9.s_dlsp2h6sddpqebFVnINHbTik5VJU-ta8O8aJB_kPQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjMDM1NmQyNS1lMzg2LTQ4NGUtYjgyNS1hNTI3MDgwOGVjYjQiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMTJUMjI6NTM6MjkuMjI2NTU5WiJ9LCJleHAiOjE2OTQ3NDU4MjN9.rYXsn92uzpcG0O_4bXGnZZhpKzqh6Pc_DtccaS6AjaA
 
 {
   "task_name": "waffles",
@@ -175,18 +175,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 
 ### STATS
 ### get stats
-GET http://localhost:3000/api/stats/team/8497629d-6780-4324-8ca8-c2b445ddbfb0
+GET http://localhost:3000/api/v1/stats/team/8497629d-6780-4324-8ca8-c2b445ddbfb0
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
 
 ### TEAM INVITES
 ### create team invite
-POST http://localhost:3000/api/team-invite/
+POST http://localhost:3000/api/v1/team-invite/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjMDM1NmQyNS1lMzg2LTQ4NGUtYjgyNS1hNTI3MDgwOGVjYjQiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMTJUMjI6NTM6MjkuMjI2NTU5WiJ9LCJleHAiOjE2OTQ4MTI2NDN9.EaN9jcWYym3tExJ-2NDtExAPgLg7zx4ovtef1fbG_UQ
 
 {
-  "team_id": "d0f67a8f-c087-413a-897d-8c3a4b6cc9fb",
+  "team_id": "d708f1d1-94ee-48e9-bae3-8453a21f18f0",
   "email": "Waffles@awaffles.test"
 }
 

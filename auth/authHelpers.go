@@ -17,9 +17,10 @@ type JWTClaims struct {
 	jwt.StandardClaims
 }
 
+const SevenDays = 7 * 24 * time.Hour
+
 func GenerateJWT(user model.User) (*string, error) {
-	log.Println(user)
-	expirationTime := time.Now().Add(1 * time.Hour)
+	expirationTime := time.Now().Add(SevenDays)
 	claims := &JWTClaims{
 		User: user,
 		StandardClaims: jwt.StandardClaims{

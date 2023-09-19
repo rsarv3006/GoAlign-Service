@@ -27,3 +27,6 @@ WHERE user_id IN (
   WHERE team_id = $1
 );
 `
+
+const UserCreateUserQuery = `
+INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *`

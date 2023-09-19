@@ -51,3 +51,15 @@ const TaskEntriesGetByTaskIdQuery = `
 SELECT * FROM task_entries
 WHERE task_id = $1;
 `
+
+const TaskEntryUpdateAssignedUserIdQuery = `
+UPDATE task_entries
+SET assigned_user_id = $1
+WHERE task_entry_id = $2;
+`
+
+const TaskEntryMarkAsCompleteByTaskIdQuery = `
+UPDATE task_entries
+SET status = 'completed'
+WHERE task_id = $1 AND status = 'active';
+`

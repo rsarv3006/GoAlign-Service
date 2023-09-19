@@ -14,8 +14,6 @@ import (
 )
 
 func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
-	// TODO: Add check if email address to invite is already in the team
-	// TODO: Check if email already has a pending invite for that team
 
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
@@ -43,9 +41,59 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, errors.New("Invalid email address"), "Invalid email address")
 	}
 
+	isAlreadyInTeamQuery := database.UserTeamMembershipGetByUserEmailAndTeamIdQueryString
+
+	isAlreadyInTeamStmt, err := database.DB.Prepare(isAlreadyInTeamQuery)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	isAlreadyInTeamRows, err := isAlreadyInTeamStmt.Query(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "violates foreign key constraint") {
+			return sendBadRequestResponse(c, errors.New("Team does not exist"), "Team does not exist")
+		}
+
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if isAlreadyInTeamRows.Next() {
+		return sendBadRequestResponse(c, errors.New("Email already in team"), "Email already in team")
+	}
+
+	isAlreadyInvitedQuery := database.TeamInviteGetByEmailAndTeamIdQueryString
+
+	isAlreadyInvitedStmt, err := database.DB.Prepare(isAlreadyInvitedQuery)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	isAlreadyInvitedRows, err := isAlreadyInvitedStmt.Query(teamInviteCreateDto.Email, teamInviteCreateDto.TeamId)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "violates foreign key constraint") {
+			return sendBadRequestResponse(c, errors.New("Team does not exist"), "Team does not exist")
+		}
+
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if isAlreadyInvitedRows.Next() {
+		return sendBadRequestResponse(c, errors.New("Email already invited"), "Email already invited")
+	}
+
+	defer isAlreadyInvitedStmt.Close()
+
 	_, err = stmt.Exec(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email, currentUser.UserId)
 
 	if err != nil {
+		if strings.Contains(err.Error(), "violates foreign key constraint") {
+			return sendBadRequestResponse(c, errors.New("Team does not exist"), "Team does not exist")
+		}
+
 		return sendInternalServerErrorResponse(c, err)
 	}
 

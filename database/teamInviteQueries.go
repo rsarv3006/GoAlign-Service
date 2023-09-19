@@ -55,3 +55,8 @@ DELETE FROM team_invites
 WHERE email = $1
 ;
 `
+
+const TeamInviteGetByEmailAndTeamIdQueryString = `
+SELECT * FROM team_invites
+WHERE email = $1 AND team_id = $2
+;`

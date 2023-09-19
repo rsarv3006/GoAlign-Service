@@ -7,7 +7,7 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/middleware"
 )
 
-// TODO: on login route add timeout if a request has been made recently
+// TODO: Fix N+1 queries
 
 // SetupRoutes func
 func SetupRoutes(app *fiber.App) {

@@ -43,7 +43,9 @@ const TaskGetTasksByAssignedUserIdQuery = `
 SELECT * FROM tasks
 WHERE task_id IN (
   SELECT task_id FROM task_entries
-  WHERE assigned_user_id = $1
+  WHERE assigned_user_id = $1 
+  AND status = 'active'
+  AND start_date <= NOW()
 );
 `
 

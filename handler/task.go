@@ -55,7 +55,6 @@ func CreateTask(c *fiber.Ctx) error {
 		err := errors.New("Required completions needed cannot be negative")
 		return sendBadRequestResponse(c, err, "Required completions needed cannot be negative")
 	} else if requiredCompletionsNeeded == nil {
-		// TODO: Is there a better way to do this?
 		requiredCompletionsNeeded = new(int)
 		*requiredCompletionsNeeded = -1
 	}
@@ -164,7 +163,7 @@ func CreateTask(c *fiber.Ctx) error {
 	}
 
 	if taskDto.EndDate != nil && taskDto.EndDate.Before(endDate) {
-		return sendBadRequestResponse(c, err, "End date cannot be before calculated end date")
+		return sendBadRequestResponse(c, err, "Task Entry End date cannot be before calculated task end date")
 	}
 
 	taskEntryCreateDto := new(model.TaskEntryCreateDto)
@@ -576,7 +575,6 @@ func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 }
 
 func UpdateTaskEndpoint(c *fiber.Ctx) error {
-	// TODO: handle updates to assigned user id since that's on the task entry row
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	currentUser, err := auth.ValidateToken(token)
 
@@ -625,8 +623,40 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 
 	defer rows.Close()
 
+	if taskUpdateDto.AssignedUserId != nil {
+		err = updateTaskEntryAssignedUserId(taskUpdateDto.TaskId, *taskUpdateDto.AssignedUserId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+	}
+
+	canTaskBeMarkedAsComplete, err := canTaskBeMarkedAsComplete(taskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	message := "Task updated successfully"
+
+	if canTaskBeMarkedAsComplete {
+		err = markTaskAsComplete(taskId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		err = markTaskEntryAsCompleteByTaskId(taskId)
+
+		if err != nil {
+			return sendInternalServerErrorResponse(c, err)
+		}
+
+		message = "Task updated successfully and marked as complete"
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Task updated successfully",
+		"message": message,
 	})
 }
 

@@ -38,8 +38,16 @@ func Register(c *fiber.Ctx) error {
 	user.UserId = uuid.New()
 	user.IsActive = true
 
-	// TODO: conver to prepared statement
-	rows, err := database.DB.Query("INSERT INTO users (username, email ) VALUES ($1, $2) RETURNING *",
+	query := database.UserCreateUserQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(
 		user.UserName,
 		user.Email,
 	)
@@ -74,6 +82,21 @@ func Login(c *fiber.Ctx) error {
 	if err := c.BodyParser(loginInitiateDto); err != nil {
 		log.Println(err)
 		return sendBadRequestResponse(c, err, "Invalid request body")
+	}
+
+	if loginInitiateDto.Email == "" {
+		err := fmt.Errorf("Email is required")
+		return sendBadRequestResponse(c, err, "Email is required")
+	}
+
+	numberOfPendingLogins, err := getNumberOfPendingLoginAttempts(loginInitiateDto.Email)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if numberOfPendingLogins >= 5 {
+		return sendBadRequestResponse(c, err, "Too many pending login attempts")
 	}
 
 	query := database.UserGetUserByEmailQuery
@@ -162,7 +185,6 @@ func FetchCode(c *fiber.Ctx) error {
 		return sendUnauthorizedResponse(c)
 	}
 
-	// TODO: convert to prepared statement
 	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE user_id = $1", loginRequest.UserId)
 
 	if errFromDb != nil {
@@ -259,8 +281,7 @@ func generateUniqueLoginCode() (string, error) {
 		attempts++
 
 		loginCode := helper.GenerateCodeHelper()
-		// TODO: convert to prepared statement
-		rows, err := database.DB.Query("SELECT * FROM login_requests WHERE login_request_token = $1", loginCode)
+		rows, err := database.DB.Query(database.LoginRequestGetRequestByTokenIdQuery, loginCode)
 
 		if err != nil {
 			return "", err
@@ -289,4 +310,25 @@ func markLoginRequestAsCompleted(loginRequestId uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func getNumberOfPendingLoginAttempts(email string) (int, error) {
+	query := database.LoginRequestGetPendingRequestsByLoginEmailQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	var numberOfPendingLoginAttempts int
+
+	err = stmt.QueryRow(email).Scan(&numberOfPendingLoginAttempts)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return numberOfPendingLoginAttempts, nil
 }

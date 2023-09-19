@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -180,6 +181,7 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 	}
 
 	if taskEntryToMarkComplete.Status == "completed" {
+		log.Println("spot one")
 		return sendBadRequestResponse(c, err, "Task Entry is already marked complete")
 	}
 
@@ -232,10 +234,16 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 		})
 	}
 
-	nextUserId, err := determineNextUserToAssignTaskTo(task.TaskId, taskEntryId)
+	nextUserId, err, status := determineNextUserToAssignTaskTo(task.TaskId, taskEntryId)
 
 	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
+		if status == 404 {
+			return sendNotFoundResponse(c, err.Error())
+		} else if status == 400 {
+			return sendBadRequestResponse(c, err, err.Error())
+		} else {
+			return sendInternalServerErrorResponse(c, err)
+		}
 	}
 
 	newTaskEntry, err := createTaskEntryFromPreviousTaskEntry(taskEntryId, *nextUserId, currentUser.UserId)
@@ -350,10 +358,16 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 	} else {
-		userIdForNextTaskEntry, err := determineNextUserToAssignTaskTo(task.TaskId, taskEntryId)
+		userIdForNextTaskEntry, err, status := determineNextUserToAssignTaskTo(task.TaskId, taskEntryId)
 
 		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
+			if status == 404 {
+				return sendNotFoundResponse(c, err.Error())
+			} else if status == 400 {
+				return sendBadRequestResponse(c, err, err.Error())
+			} else {
+				return sendInternalServerErrorResponse(c, err)
+			}
 		}
 
 		_, err = createTaskEntryFromPreviousTaskEntry(taskEntryId, *userIdForNextTaskEntry, currentUser.UserId)
@@ -410,25 +424,21 @@ func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 	return taskEntries, nil
 }
 
-func determineNextUserToAssignTaskTo(taskId uuid.UUID, taskEntryId uuid.UUID) (*uuid.UUID, error) {
+func determineNextUserToAssignTaskTo(taskId uuid.UUID, taskEntryId uuid.UUID) (*uuid.UUID, error, int) {
 	task, err := getTaskByTaskId(taskId)
 
 	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
+		return nil, err, 500
 	}
 
 	teamMembers, err := getUsersByTeamId(task.TeamId)
 
 	if err != nil {
-		return nil, err
+		return nil, err, 500
 	}
 
 	if len(teamMembers) == 1 {
-		return &teamMembers[0].UserId, nil
+		return &teamMembers[0].UserId, nil, 201
 	}
 
 	taskEntries, err := getTaskEntriesByTaskId(taskId)
@@ -442,18 +452,20 @@ func determineNextUserToAssignTaskTo(taskId uuid.UUID, taskEntryId uuid.UUID) (*
 	}
 
 	if currentTaskEntry.Status == "" {
-		return nil, errors.New("Task Entry not found")
-	}
-
-	if currentTaskEntry.Status == "completed" {
-		return nil, errors.New("Task Entry is already marked complete")
+		return nil, errors.New("Task Entry not found"), 404
 	}
 
 	if err != nil {
-		return nil, err
+		return nil, err, 500
 	}
 
 	memberTaskEntryCountMap := make(map[uuid.UUID]int)
+
+	for _, teamMember := range teamMembers {
+		memberTaskEntryCountMap[teamMember.UserId] = 0
+	}
+
+	log.Println(memberTaskEntryCountMap)
 
 	for _, taskEntry := range taskEntries {
 		if taskEntry.Status == "completed" {
@@ -463,17 +475,17 @@ func determineNextUserToAssignTaskTo(taskId uuid.UUID, taskEntryId uuid.UUID) (*
 
 	delete(memberTaskEntryCountMap, currentTaskEntry.AssignedUserId)
 
-	var minTaskEntryCount int
+	var minTaskEntryCount = 0
 	var minTaskEntryCountUserId uuid.UUID
 
 	for userId, taskEntryCount := range memberTaskEntryCountMap {
-		if taskEntryCount < minTaskEntryCount {
+		if taskEntryCount <= minTaskEntryCount {
 			minTaskEntryCount = taskEntryCount
 			minTaskEntryCountUserId = userId
 		}
 	}
 
-	return &minTaskEntryCountUserId, nil
+	return &minTaskEntryCountUserId, nil, 201
 }
 
 func createTaskEntryFromPreviousTaskEntry(
@@ -512,7 +524,47 @@ func createTaskEntryFromPreviousTaskEntry(
 		TaskId:         previousTaskEntry.TaskId,
 	}
 
+	log.Println("taskEntryCreateDto", taskEntryCreateDto)
+
 	newTaskEntry, err := createTaskEntry(&taskEntryCreateDto, currentUserId)
 
 	return newTaskEntry, err
+}
+
+func updateTaskEntryAssignedUserId(taskEntryId uuid.UUID, userId uuid.UUID) error {
+	query := database.TaskEntryUpdateAssignedUserIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(userId, taskEntryId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func markTaskEntryAsCompleteByTaskId(taskId uuid.UUID) error {
+	query := database.TaskEntryMarkAsCompleteByTaskIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
