@@ -37,7 +37,8 @@ WHERE task_entry_id = $1;
 
 const TaskEntryMarkCompleteQuery = `
 UPDATE task_entries
-SET status = 'completed'
+SET status = 'completed', 
+completed_date = CURRENT_TIMESTAMP
 WHERE task_entry_id = $1;
 `
 
