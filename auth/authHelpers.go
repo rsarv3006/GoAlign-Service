@@ -4,12 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
-
-// TODO: move to env
-var jwtKey = []byte("supersecretkey")
 
 type JWTClaims struct {
 	User model.User
@@ -18,7 +16,10 @@ type JWTClaims struct {
 
 const SevenDays = 7 * 24 * time.Hour
 
-func GenerateJWT(user model.User) (*string, error) {
+func GenerateJWT(user model.User, ctx *fiber.Ctx) (*string, error) {
+	jwtSecretString := ctx.Locals("JwtSecret").(string)
+	jwtKey := []byte(jwtSecretString)
+
 	expirationTime := time.Now().Add(SevenDays)
 	claims := &JWTClaims{
 		User: user,
@@ -31,7 +32,10 @@ func GenerateJWT(user model.User) (*string, error) {
 	return &tokenString, err
 }
 
-func ValidateToken(signedToken string) (*model.User, error) {
+func ValidateToken(signedToken string, ctx *fiber.Ctx) (*model.User, error) {
+	jwtSecretString := ctx.Locals("JwtSecret").(string)
+	jwtKey := []byte(jwtSecretString)
+
 	token, err := jwt.ParseWithClaims(
 		signedToken,
 		&JWTClaims{},

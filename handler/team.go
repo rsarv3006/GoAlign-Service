@@ -17,7 +17,7 @@ import (
 
 func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		log.Error(err)
@@ -86,7 +86,7 @@ func CreateTeam(c *fiber.Ctx) error {
 	log.Info("CreateTeam")
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
 	log.Info("CreateTeam 2")
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 	log.Info("CreateTeam 3")
 
 	if err != nil {
@@ -229,7 +229,7 @@ func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
 
 func DeleteTeam(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -328,7 +328,7 @@ func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
 
 func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -363,7 +363,7 @@ func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 
 func UpdateTeamManagerEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)

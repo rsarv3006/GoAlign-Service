@@ -17,7 +17,7 @@ func IsExpired() fiber.Handler {
 		}
 
 		token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-		currentUser, err := auth.ValidateToken(token)
+		currentUser, err := auth.ValidateToken(token, c)
 
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

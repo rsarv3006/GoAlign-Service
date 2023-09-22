@@ -16,7 +16,7 @@ import (
 
 func CreateTask(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -192,7 +192,7 @@ func CreateTask(c *fiber.Ctx) error {
 
 func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -273,7 +273,7 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 
 func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -422,7 +422,7 @@ func isUserTheTeamManager(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
 
 func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -490,7 +490,7 @@ func deleteTaskByTaskId(taskId uuid.UUID) error {
 
 func GetTaskEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -576,7 +576,7 @@ func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 
 func UpdateTaskEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)

@@ -155,7 +155,7 @@ func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
 
 func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -181,7 +181,6 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 	}
 
 	if taskEntryToMarkComplete.Status == "completed" {
-		log.Println("spot one")
 		return sendBadRequestResponse(c, err, "Task Entry is already marked complete")
 	}
 
@@ -290,7 +289,7 @@ func getTaskEntryByTaskEntryId(taskEntryId uuid.UUID) (*model.TaskEntry, error) 
 
 func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)

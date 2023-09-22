@@ -214,7 +214,7 @@ func FetchCode(c *fiber.Ctx) error {
 		return sendUnauthorizedResponse(c)
 	}
 
-	signedTokenString, err := auth.GenerateJWT(user)
+	signedTokenString, err := auth.GenerateJWT(user, c)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)

@@ -1,26 +1,36 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/router"
-	"log"
 
 	_ "github.com/lib/pq"
 )
 
-// entry point to our program
 func main() {
 	println("Starting server...")
-	// Connect to database
 	if err := database.Connect(); err != nil {
 		log.Fatal(err)
 	}
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+
 	println("Connected to database...")
 
-	// call the New() method - used to instantiate a new Fiber App
 	app := fiber.New()
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
+		c.Locals("JwtSecret", jwtSecret)
+		return c.Next()
+	})
 
 	println("Created new fiber app...")
 
@@ -28,7 +38,6 @@ func main() {
 
 	println("Routes setup.")
 
-	// listen on port 3000
 	err := app.Listen(":3000")
 
 	if err != nil {

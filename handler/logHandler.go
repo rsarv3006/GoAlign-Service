@@ -13,7 +13,7 @@ import (
 
 func LogEventEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)

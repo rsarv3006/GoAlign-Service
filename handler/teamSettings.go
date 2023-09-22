@@ -62,7 +62,7 @@ func DeleteTeamSettingsByTeamId(teamId uuid.UUID) error {
 
 func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -158,7 +158,7 @@ func getTeamSettingsByTeamId(teamId uuid.UUID) (*model.TeamSettings, error) {
 
 func GetTeamSettingsByTeamIdEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)

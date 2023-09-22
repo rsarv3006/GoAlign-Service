@@ -16,7 +16,7 @@ import (
 func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -104,7 +104,7 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -185,7 +185,7 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 
 func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	_, err := auth.ValidateToken(token)
+	_, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -243,7 +243,7 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 
 func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -320,7 +320,7 @@ func isAllowedToDeleteTeamInvite(teamInvite *model.TeamInvite, currentUser *mode
 
 func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
@@ -380,7 +380,7 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 
 func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token)
+	currentUser, err := auth.ValidateToken(token, c)
 
 	if err != nil {
 		return sendUnauthorizedResponse(c)
