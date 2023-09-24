@@ -33,3 +33,10 @@ WHERE login_request_status = 'pending' AND user_id IN (
 )
 AND login_request_expiration_date > CURRENT_TIMESTAMP;
 `
+
+const LoginRequestMarkAsExpiredQuery = `
+UPDATE login_requests
+SET login_request_status = 'expired'
+WHERE login_request_status = 'pending'
+  AND login_request_expiration_date < CURRENT_TIMESTAMP;
+`
