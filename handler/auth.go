@@ -28,7 +28,7 @@ func Register(c *fiber.Ctx) error {
 	userName := helper.SanitizeInput(userCreateDto.UserName)
 
 	user.UserName = userName
-	user.Email = userCreateDto.Email
+	user.Email = strings.ToLower(userCreateDto.Email)
 
 	if user.UserName == "" || user.Email == "" {
 		err := fmt.Errorf("Username and Email are required")
@@ -89,7 +89,9 @@ func Login(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Email is required")
 	}
 
-	numberOfPendingLogins, err := getNumberOfPendingLoginAttempts(loginInitiateDto.Email)
+	loginEmail := strings.ToLower(loginInitiateDto.Email)
+
+	numberOfPendingLogins, err := getNumberOfPendingLoginAttempts(loginEmail)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -110,7 +112,7 @@ func Login(c *fiber.Ctx) error {
 
 	user := model.User{}
 
-	err = stmt.QueryRow(loginInitiateDto.Email).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
+	err = stmt.QueryRow(loginEmail).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -160,35 +162,28 @@ func FetchCode(c *fiber.Ctx) error {
 		&loginRequest.LoginRequestStatus)
 
 	if err != nil {
-		log.Println(err)
-		log.Println("confirm location")
 		return sendUnauthorizedResponse(c)
 	}
 
 	if loginRequest.LoginRequestStatus != "pending" {
-		log.Println(err)
 		return sendUnauthorizedResponse(c)
 	}
 
 	if loginRequest.LoginRequestExpirationDate.Before(time.Now()) {
-		log.Println(err)
 		return sendUnauthorizedResponse(c)
 	}
 
 	if loginRequest.LoginRequestToken != loginRequestDto.LoginRequestToken {
-		log.Println(err)
 		return sendUnauthorizedResponse(c)
 	}
 
 	if loginRequest.UserId != loginRequestDto.UserId {
-		log.Println(err)
 		return sendUnauthorizedResponse(c)
 	}
 
 	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE user_id = $1", loginRequest.UserId)
 
 	if errFromDb != nil {
-		log.Println(errFromDb)
 		return sendUnauthorizedResponse(c)
 	}
 
