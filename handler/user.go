@@ -40,6 +40,8 @@ func DeleteUserEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	_, err = stmt.Exec(userId)
 
 	if err != nil {
@@ -59,11 +61,15 @@ func getUsersByTeamId(teamId uuid.UUID) ([]model.User, error) {
 		return users, err
 	}
 
+	defer stmt.Close()
+
 	rows, err := stmt.Query(teamId)
 
 	if err != nil {
 		return users, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var user model.User
@@ -88,6 +94,8 @@ func getUserById(userId uuid.UUID) (model.User, error) {
 	if err != nil {
 		return user, err
 	}
+
+	defer stmt.Close()
 
 	err = stmt.QueryRow(userId).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
 

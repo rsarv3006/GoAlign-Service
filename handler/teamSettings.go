@@ -17,6 +17,8 @@ func CreateTeamSettings(dto model.TeamSettingsCreateDto) (*model.TeamSettings, e
 		return nil, err
 	}
 
+	defer stmt.Close()
+
 	var teamSettings *model.TeamSettings
 
 	rows, err := stmt.Query(dto.TeamId, dto.CanAllMembersAddTasks)
@@ -24,6 +26,8 @@ func CreateTeamSettings(dto model.TeamSettingsCreateDto) (*model.TeamSettings, e
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		teamSettings = &model.TeamSettings{}
@@ -48,6 +52,8 @@ func DeleteTeamSettingsByTeamId(teamId uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+
+	defer stmt.Close()
 
 	_, err = stmt.Exec(teamId)
 
@@ -102,6 +108,8 @@ func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer rows.Close()
+
 	teamSettings := new(model.TeamSettings)
 
 	if rows.Next() {
@@ -135,6 +143,8 @@ func getTeamSettingsByTeamId(teamId uuid.UUID) (*model.TeamSettings, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	teamSettings := new(model.TeamSettings)
 

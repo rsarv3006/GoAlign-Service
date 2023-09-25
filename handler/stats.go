@@ -20,7 +20,6 @@ func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
 	teamMembers, err := getUserTeamMemberships(teamId)
 
 	if err != nil {
-		log.Error(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
@@ -39,7 +38,6 @@ func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
 	statsReturnDto, err := getStatsByTeamId(teamId)
 
 	if err != nil {
-		log.Error(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 

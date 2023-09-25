@@ -27,6 +27,8 @@ func CreateUserTeamMembership(userId uuid.UUID, teamId uuid.UUID) (*model.UserTe
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		err := rows.Scan(&userTeamMembership.UserTeamMembershipId, &userTeamMembership.UserId, &userTeamMembership.TeamId, &userTeamMembership.CreatedAt, &userTeamMembership.UpdatedAt, &userTeamMembership.Status)
 		if err != nil {
@@ -53,6 +55,8 @@ func getUserTeamMemberships(teamId uuid.UUID) ([]model.UserTeamMembership, error
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	var users []model.UserTeamMembership
 
@@ -86,6 +90,8 @@ func isUserInTeam(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		return true, nil
@@ -182,11 +188,13 @@ func RemoveUserFromTeamEndpoint(c *fiber.Ctx) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Query(userId, teamId)
+	rows, err := stmt.Query(userId, teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	return c.SendStatus(fiber.StatusNoContent)
 }

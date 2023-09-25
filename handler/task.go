@@ -117,6 +117,8 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer rows.Close()
+
 	intervalBetweenWindows := model.IntervalObj{}
 	windowDuration := model.IntervalObj{}
 
@@ -200,6 +202,8 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	tasks := make([]*model.TaskReturnWithTaskEntries, 0)
 
@@ -307,6 +311,8 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, erro
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	tasks := []model.TaskReturnWithTaskEntries{}
 

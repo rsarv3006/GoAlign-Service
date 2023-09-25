@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -66,6 +65,8 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
 
@@ -105,6 +106,8 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		taskEntry := new(model.TaskEntry)
@@ -269,6 +272,8 @@ func getTaskEntryByTaskEntryId(taskEntryId uuid.UUID) (*model.TaskEntry, error) 
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
 
@@ -384,6 +389,8 @@ func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		taskEntry := new(model.TaskEntry)
@@ -508,8 +515,6 @@ func createTaskEntryFromPreviousTaskEntry(
 		AssignedUserId: nextAssignedUserId,
 		TaskId:         previousTaskEntry.TaskId,
 	}
-
-	log.Println("taskEntryCreateDto", taskEntryCreateDto)
 
 	newTaskEntry, err := createTaskEntry(&taskEntryCreateDto, currentUserId)
 

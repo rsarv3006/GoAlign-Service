@@ -28,6 +28,8 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	isValidEmailAddress := helper.IsValidEmailAddress(teamInviteCreateDto.Email)
 
 	if !isValidEmailAddress {
@@ -35,12 +37,13 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 	}
 
 	isAlreadyInTeamQuery := database.UserTeamMembershipGetByUserEmailAndTeamIdQueryString
-
 	isAlreadyInTeamStmt, err := database.DB.Prepare(isAlreadyInTeamQuery)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer isAlreadyInTeamStmt.Close()
 
 	isAlreadyInTeamRows, err := isAlreadyInTeamStmt.Query(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email)
 
@@ -51,6 +54,8 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer isAlreadyInTeamRows.Close()
 
 	if isAlreadyInTeamRows.Next() {
 		return sendBadRequestResponse(c, errors.New("Email already in team"), "Email already in team")
@@ -64,6 +69,8 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer isAlreadyInvitedStmt.Close()
+
 	isAlreadyInvitedRows, err := isAlreadyInvitedStmt.Query(teamInviteCreateDto.Email, teamInviteCreateDto.TeamId)
 
 	if err != nil {
@@ -73,6 +80,8 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer isAlreadyInvitedRows.Close()
 
 	if isAlreadyInvitedRows.Next() {
 		return sendBadRequestResponse(c, errors.New("Email already invited"), "Email already invited")
@@ -105,6 +114,8 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	teamInvite := new(model.TeamInvite)
 
 	rows, err := stmt.Query(c.Params("teamInviteId"))
@@ -112,6 +123,8 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
@@ -137,6 +150,8 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer stmt.Close()
 
 	teamInviteId := c.Params("teamInviteId")
 
@@ -179,6 +194,8 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	teamInvite := new(model.TeamInvite)
 	teamInviteId := c.Params("teamInviteId")
 
@@ -187,6 +204,8 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
@@ -213,6 +232,8 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	_, err = stmt.Exec(teamInviteId)
 
 	if err != nil {
@@ -232,11 +253,15 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	rows, err := stmt.Query(currentUser.Email)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	teamInvites := make([]model.TeamInviteReturnWithCreator, 0)
 
@@ -304,6 +329,8 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	teamInvite := new(model.TeamInvite)
 	teamInviteId := c.Params("teamInviteId")
 
@@ -312,6 +339,8 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&teamInvite.TeamInviteId, &teamInvite.TeamId, &teamInvite.Email, &teamInvite.CreatedAt, &teamInvite.UpdatedAt, &teamInvite.Status, &teamInvite.InviteCreatorId)
@@ -339,6 +368,8 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer stmt.Close()
 
 	_, err = stmt.Exec(teamInviteId)
 
@@ -376,11 +407,15 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer stmt.Close()
+
 	rows, err := stmt.Query(teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	teamInvites := make([]model.TeamInviteReturnWithCreator, 0)
 
@@ -426,6 +461,8 @@ func deleteTeamInvitesByUserEmail(email string) error {
 	if err != nil {
 		return err
 	}
+
+	defer stmt.Close()
 
 	_, err = stmt.Exec(email)
 

@@ -38,7 +38,7 @@ func logEvent(logCreateDto *model.LogCreateDto, userId uuid.UUID) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Query(
+	row, err := stmt.Query(
 		logCreateDto.LogMessage,
 		logCreateDto.LogLevel,
 		logCreateDto.LogData,
@@ -48,6 +48,8 @@ func logEvent(logCreateDto *model.LogCreateDto, userId uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+
+	row.Close()
 
 	return nil
 }
@@ -62,7 +64,7 @@ func logEventOnlyMessage(logCreateDto *model.LogCreateDto) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Query(
+	rows, err := stmt.Query(
 		logCreateDto.LogMessage,
 		logCreateDto.LogLevel,
 	)
@@ -70,6 +72,8 @@ func logEventOnlyMessage(logCreateDto *model.LogCreateDto) error {
 	if err != nil {
 		return err
 	}
+
+	defer rows.Close()
 
 	return nil
 }

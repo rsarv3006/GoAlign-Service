@@ -59,6 +59,8 @@ func Register(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer rows.Close()
+
 	if rows.Next() {
 		err := rows.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
 		if err != nil {
@@ -251,6 +253,8 @@ func createLoginRequest(userId uuid.UUID) (*model.LoginRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	defer rows.Close()
 
 	loginRequest := model.LoginRequest{}
 	if rows.Next() {

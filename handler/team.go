@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
@@ -20,16 +19,16 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
-		log.Error(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
 	rows, err := stmt.Query(currentUser.UserId)
 
 	if err != nil {
-		log.Error(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	teams := make([]model.TeamReturnWithUsersAndTasks, 0)
 
@@ -91,7 +90,6 @@ func CreateTeam(c *fiber.Ctx) error {
 	query := database.TeamCreateQueryString
 	stmt, err := database.DB.Prepare(query)
 
-	log.Info("CreateTeam 8")
 	if err != nil {
 		switch e := err.(type) {
 		case *pq.Error:
@@ -103,6 +101,7 @@ func CreateTeam(c *fiber.Ctx) error {
 
 		return sendInternalServerErrorResponse(c, err)
 	}
+
 	defer stmt.Close()
 
 	team := new(model.Team)
@@ -121,6 +120,8 @@ func CreateTeam(c *fiber.Ctx) error {
 		}
 		return sendBadRequestResponse(c, err, "")
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
@@ -170,6 +171,8 @@ func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	defer stmt.Close()
 
 	team := new(model.Team)
 	err = stmt.QueryRow(teamId).Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
@@ -286,6 +289,8 @@ func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
 		return false
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		return true
 	}
@@ -368,11 +373,13 @@ func UpdateTeamManagerEndpoint(c *fiber.Ctx) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Query(teamManagerId, teamId)
+	rows, err := stmt.Query(teamManagerId, teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
+
+	defer rows.Close()
 
 	return c.Status(200).JSON(&fiber.Map{
 		"message": "Team manager updated successfully",
