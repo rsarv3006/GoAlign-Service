@@ -24,7 +24,7 @@ func SetupRoutes(app *fiber.App) {
 }
 
 func setupAuthRoutes(api fiber.Router) {
-	auth := api.Group("/v1/auth", logger.New())
+	auth := api.Group("/v1/auth")
 
 	auth.Post("/register", handler.Register)
 	auth.Post("/login", handler.Login)
@@ -32,9 +32,7 @@ func setupAuthRoutes(api fiber.Router) {
 }
 
 func setUpTeamRoutes(api fiber.Router) {
-	team := api.Group("/v1/team", logger.New())
-
-	team.Use(logger.New())
+	team := api.Group("/v1/team")
 	team.Use(middleware.IsExpired())
 
 	team.Post("/", handler.CreateTeam)
@@ -48,9 +46,7 @@ func setUpTeamRoutes(api fiber.Router) {
 }
 
 func setUpTaskRoutes(api fiber.Router) {
-	task := api.Group("/v1/task", logger.New())
-
-	task.Use(logger.New())
+	task := api.Group("/v1/task")
 	task.Use(middleware.IsExpired())
 
 	task.Post("/", handler.CreateTask)
@@ -62,9 +58,7 @@ func setUpTaskRoutes(api fiber.Router) {
 }
 
 func setUpTaskEntryRoutes(api fiber.Router) {
-	taskEntry := api.Group("/v1/task-entry", logger.New())
-
-	taskEntry.Use(logger.New())
+	taskEntry := api.Group("/v1/task-entry")
 	taskEntry.Use(middleware.IsExpired())
 
 	taskEntry.Post("/markTaskEntryComplete/:taskEntryId", handler.MarkTaskEntryCompleteEndpoint)
@@ -72,17 +66,14 @@ func setUpTaskEntryRoutes(api fiber.Router) {
 }
 
 func setUpStatsRoutes(api fiber.Router) {
-	stats := api.Group("/v1/stats", logger.New())
-
-	stats.Use(logger.New())
+	stats := api.Group("/v1/stats")
 	stats.Use(middleware.IsExpired())
 
 	stats.Get("/team/:teamId", handler.GetStatsByTeamIdEndpoint)
 }
 
 func setUpTeamInviteRoutes(api fiber.Router) {
-	teamInvites := api.Group("/v1/team-invite", logger.New())
-
+	teamInvites := api.Group("/v1/team-invite")
 	teamInvites.Use(middleware.IsExpired())
 
 	teamInvites.Post("/", handler.CreateTeamInviteEndpoint)
@@ -94,26 +85,21 @@ func setUpTeamInviteRoutes(api fiber.Router) {
 }
 
 func setUpUserRoutes(api fiber.Router) {
-	user := api.Group("/v1/user", logger.New())
-
-	user.Use(logger.New())
+	user := api.Group("/v1/user")
 	user.Use(middleware.IsExpired())
 
 	user.Delete("/", handler.DeleteUserEndpoint)
 }
 
 func setUpLoggingRoutes(api fiber.Router) {
-	log := api.Group("/v1/log", logger.New())
-
-	log.Use(logger.New())
+	log := api.Group("/v1/log")
 	log.Use(middleware.IsExpired())
+
 	log.Post("/", handler.LogEventEndpoint)
 }
 
 func setUpAdminRoutes(api fiber.Router) {
-	admin := api.Group("/v1/admin", logger.New())
-
-	admin.Use(logger.New())
+	admin := api.Group("/v1/admin")
 	admin.Use(middleware.IsExpired())
 
 	admin.Post("/login-requests/updateExpiredStatus", handler.UpdateExpiredLoginRequestsEndpoint)
