@@ -2,22 +2,15 @@ package handler
 
 import (
 	"log"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func LogEventEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(model.User)
 
 	logCreateDto := new(model.LogCreateDto)
 	if err := c.BodyParser(logCreateDto); err != nil {
@@ -25,7 +18,7 @@ func LogEventEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
-	err = logEvent(logCreateDto, currentUser.UserId)
+	err := logEvent(logCreateDto, currentUser.UserId)
 
 	if err != nil {
 		log.Println(err)

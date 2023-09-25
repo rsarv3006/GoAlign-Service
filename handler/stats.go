@@ -1,23 +1,14 @@
 package handler
 
 import (
-	"strings"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/google/uuid"
-	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		log.Error(err)
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 

@@ -3,11 +3,9 @@ package handler
 import (
 	"errors"
 	"log"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
@@ -154,12 +152,7 @@ func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
 }
 
 func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	taskEntryIdString := c.Params("taskEntryId")
 	taskEntryId, err := uuid.Parse(taskEntryIdString)
@@ -288,12 +281,7 @@ func getTaskEntryByTaskEntryId(taskEntryId uuid.UUID) (*model.TaskEntry, error) 
 }
 
 func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	taskEntryIdString := c.Params("taskEntryId")
 
@@ -463,8 +451,6 @@ func determineNextUserToAssignTaskTo(taskId uuid.UUID, taskEntryId uuid.UUID) (*
 	for _, teamMember := range teamMembers {
 		memberTaskEntryCountMap[teamMember.UserId] = 0
 	}
-
-	log.Println(memberTaskEntryCountMap)
 
 	for _, taskEntry := range taskEntries {
 		if taskEntry.Status == "completed" {

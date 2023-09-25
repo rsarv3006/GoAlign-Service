@@ -18,6 +18,7 @@ func main() {
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
+	env := os.Getenv("ENV")
 
 	println("Connected to database...")
 
@@ -29,6 +30,8 @@ func main() {
 		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
 		c.Locals("JwtSecret", jwtSecret)
+		c.Locals("Env", env)
+
 		return c.Next()
 	})
 

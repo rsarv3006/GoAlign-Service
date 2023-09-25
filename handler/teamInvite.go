@@ -7,20 +7,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/google/uuid"
-	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
-
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamInviteCreateDto := new(model.TeamInviteCreateDto)
 
@@ -103,12 +96,7 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 }
 
 func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TeamInviteGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
@@ -184,13 +172,6 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 }
 
 func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	_, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
-
 	query := database.TeamInviteGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
 
@@ -242,12 +223,7 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 }
 
 func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TeamInvitesForCurrentUserQueryString
 	stmt, err := database.DB.Prepare(query)
@@ -319,12 +295,7 @@ func isAllowedToDeleteTeamInvite(teamInvite *model.TeamInvite, currentUser *mode
 }
 
 func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TeamInviteGetByIdQueryString
 	stmt, err := database.DB.Prepare(query)
@@ -379,12 +350,7 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 }
 
 func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamId := c.Params("teamId")
 	teamIdUUID, err := uuid.Parse(teamId)

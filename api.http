@@ -21,9 +21,9 @@ POST http://localhost:3000/api/v1/auth/code
 Content-Type: application/json
 
 {
-  "login_code_request_id": "1f02a471-76c3-488a-83a0-01c576a058f8",
+  "login_code_request_id": "3786bf44-a727-45cc-b834-74cba0951d56",
   "user_id": "c0356d25-e386-484e-b825-a5270808ecb4",
-  "login_request_token": "V7W1KL"
+  "login_request_token": "BNFTY3"
 }
 
 ### other test user
@@ -233,3 +233,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
   "log_level": "info",
   "log_data": "{\"test\": \"test\"}"
 }
+
+POST http://localhost:3000/api/v1/admin/login-requests/updateExpiredStatus
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjMDM1NmQyNS1lMzg2LTQ4NGUtYjgyNS1hNTI3MDgwOGVjYjQiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMTJUMjI6NTM6MjkuMjI2NTU5WiJ9LCJleHAiOjE2OTYxOTkzNjd9.-ricbXE22T-3Yb8hJMn5kQ_P2O_1dziGbocPjCMVijU

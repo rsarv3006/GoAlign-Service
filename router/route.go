@@ -7,8 +7,6 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/middleware"
 )
 
-// TODO: Fix N+1 queries
-
 // SetupRoutes func
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api", logger.New())
@@ -21,6 +19,8 @@ func SetupRoutes(app *fiber.App) {
 	setUpTeamInviteRoutes(api)
 	setUpUserRoutes(api)
 	setUpLoggingRoutes(api)
+
+	setUpAdminRoutes(api)
 }
 
 func setupAuthRoutes(api fiber.Router) {
@@ -29,7 +29,6 @@ func setupAuthRoutes(api fiber.Router) {
 	auth.Post("/register", handler.Register)
 	auth.Post("/login", handler.Login)
 	auth.Post("/code", handler.FetchCode)
-	// TODO: Add refresh token route
 }
 
 func setUpTeamRoutes(api fiber.Router) {
@@ -109,4 +108,13 @@ func setUpLoggingRoutes(api fiber.Router) {
 	log.Use(logger.New())
 	log.Use(middleware.IsExpired())
 	log.Post("/", handler.LogEventEndpoint)
+}
+
+func setUpAdminRoutes(api fiber.Router) {
+	admin := api.Group("/v1/admin", logger.New())
+
+	admin.Use(logger.New())
+	admin.Use(middleware.IsExpired())
+
+	admin.Post("/login-requests/updateExpiredStatus", handler.UpdateExpiredLoginRequestsEndpoint)
 }

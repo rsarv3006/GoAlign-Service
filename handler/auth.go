@@ -230,7 +230,6 @@ func isUserObjectNotNil(user *model.User) bool {
 }
 
 func createLoginRequest(userId uuid.UUID) (*model.LoginRequest, error) {
-	// TODO: Send email with code
 	query := database.CreateLoginRequestQuery
 	stmt, err := database.DB.Prepare(query)
 

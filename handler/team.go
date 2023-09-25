@@ -3,26 +3,18 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func GetTeamsForCurrentUser(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		log.Error(err)
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TeamGetByUserIdQueryString
 	stmt, err := database.DB.Prepare(query)
@@ -83,30 +75,19 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 }
 
 func CreateTeam(c *fiber.Ctx) error {
-	log.Info("CreateTeam")
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	log.Info("CreateTeam 2")
-	currentUser, err := auth.ValidateToken(token, c)
-	log.Info("CreateTeam 3")
+	currentUser := c.Locals("currentUser").(*model.User)
 
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
-
-	log.Info("CreateTeam 4")
 	teamDto := new(model.TeamCreateDto)
 
-	log.Info("CreateTeam 5")
 	if err := c.BodyParser(teamDto); err != nil {
 		return sendBadRequestResponse(c, err, "Unable to parse team create dto")
 	}
 
-	log.Info("CreateTeam 6")
 	if teamDto.TeamName == "" {
+		err := errors.New("Team name is required")
 		return sendBadRequestResponse(c, err, "Team name is required")
 	}
 
-	log.Info("CreateTeam 7")
 	query := database.TeamCreateQueryString
 	stmt, err := database.DB.Prepare(query)
 
@@ -124,14 +105,11 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 	defer stmt.Close()
 
-	log.Info("CreateTeam 9")
 	team := new(model.Team)
 
-	log.Info("CreateTeam 10")
 	cleanedTeamName := helper.SanitizeInput(teamDto.TeamName)
 	rows, err := stmt.Query(cleanedTeamName, currentUser.UserId, currentUser.UserId)
 
-	log.Info("CreateTeam 11")
 	if err != nil {
 		switch e := err.(type) {
 		case *pq.Error:
@@ -144,7 +122,6 @@ func CreateTeam(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "")
 	}
 
-	log.Info("CreateTeam 12")
 	for rows.Next() {
 		err := rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
 		if err != nil {
@@ -153,22 +130,17 @@ func CreateTeam(c *fiber.Ctx) error {
 		}
 	}
 
-	log.Info("CreateTeam 13")
 	_, err = CreateUserTeamMembership(currentUser.UserId, team.TeamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	log.Info("Spot 1")
 	teamUsers := make([]model.User, 0)
-	log.Info("Spot 2")
 	teamUsers = append(teamUsers, *currentUser)
 
-	log.Info("Spot 3")
 	teamTasks := make([]model.TaskReturnWithTaskEntries, 0)
 
-	log.Info("Spot 4")
 	teamReturn := model.TeamReturnWithUsersAndTasks{
 		Team:  team,
 		Users: teamUsers,
@@ -228,12 +200,7 @@ func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
 }
 
 func DeleteTeam(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamId, err := uuid.Parse(c.Params("id"))
 
@@ -327,12 +294,7 @@ func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
 }
 
 func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 
@@ -362,12 +324,7 @@ func GetTeamByTeamIdEndpoint(c *fiber.Ctx) error {
 }
 
 func UpdateTeamManagerEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 

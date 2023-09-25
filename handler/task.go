@@ -3,24 +3,17 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"gitlab.com/donutsahoy/yourturn-fiber/auth"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
 func CreateTask(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	taskDto := new(model.TaskCreateDto)
 
@@ -191,12 +184,7 @@ func CreateTask(c *fiber.Ctx) error {
 }
 
 func GetTasksForUserEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TaskGetTasksByAssignedUserIdQuery
 	stmt, err := database.DB.Prepare(query)
@@ -272,12 +260,7 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 }
 
 func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	teamId, err := uuid.Parse(c.Params("teamId"))
 
@@ -421,12 +404,7 @@ func isUserTheTeamManager(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
 }
 
 func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	taskId, err := uuid.Parse(c.Params("taskId"))
 
@@ -489,12 +467,7 @@ func deleteTaskByTaskId(taskId uuid.UUID) error {
 }
 
 func GetTaskEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(model.User)
 
 	taskId, err := uuid.Parse(c.Params("taskId"))
 
@@ -575,12 +548,7 @@ func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 }
 
 func UpdateTaskEndpoint(c *fiber.Ctx) error {
-	token := strings.Split(c.Get("Authorization"), "Bearer ")[1]
-	currentUser, err := auth.ValidateToken(token, c)
-
-	if err != nil {
-		return sendUnauthorizedResponse(c)
-	}
+	currentUser := c.Locals("currentUser").(model.User)
 
 	taskUpdateDto := new(model.TaskUpdateDto)
 
