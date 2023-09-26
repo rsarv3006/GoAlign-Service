@@ -21,9 +21,9 @@ POST http://localhost:3000/api/v1/auth/code
 Content-Type: application/json
 
 {
-  "login_code_request_id": "3786bf44-a727-45cc-b834-74cba0951d56",
-  "user_id": "c0356d25-e386-484e-b825-a5270808ecb4",
-  "login_request_token": "BNFTY3"
+  "login_code_request_id": "74dd9620-9599-4d5d-8364-47c695cd6b23",
+  "user_id": "9657a56d-904a-4b46-b7b7-e269aff003d1",
+  "login_request_token": "JY2H1S"
 }
 
 ### other test user
