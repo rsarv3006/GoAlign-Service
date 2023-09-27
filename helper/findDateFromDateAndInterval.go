@@ -2,7 +2,6 @@ package helper
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
@@ -29,6 +28,5 @@ func FindDateFromDateAndInterval(date time.Time, interval model.IntervalObj) (ti
 		return time.Now(), errors.New("Interval unit not found")
 	}
 
-	log.Println("date: ", date)
 	return date, nil
 }
