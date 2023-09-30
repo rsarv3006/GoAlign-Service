@@ -8,7 +8,7 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/router"
 
-	_ "github.com/lib/pq"
+	brevo "github.com/getbrevo/brevo-go/lib"
 )
 
 func main() {
@@ -24,6 +24,10 @@ func main() {
 
 	app := fiber.New()
 
+	println("Initializing emailer...")
+	brevoClient := initializeEmailer()
+
+	println("Setting context")
 	app.Use(func(c *fiber.Ctx) error {
 		c.Set("Access-Control-Allow-Origin", "*")
 		c.Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
@@ -31,6 +35,7 @@ func main() {
 
 		c.Locals("JwtSecret", jwtSecret)
 		c.Locals("Env", env)
+		c.Locals("BrevoClient", brevoClient)
 
 		return c.Next()
 	})
@@ -46,4 +51,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initializeEmailer() *brevo.APIClient {
+	cfg := brevo.NewConfiguration()
+	cfg.AddDefaultHeader("api-key", "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")
+
+	return brevo.NewAPIClient(cfg)
 }
