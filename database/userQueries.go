@@ -30,3 +30,15 @@ WHERE user_id IN (
 
 const UserCreateUserQuery = `
 INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *`
+
+const UserGetUsersByIdArrayQuery = `
+SELECT * FROM users
+WHERE user_id = ANY($1);
+`
+
+const UserGetUsersByTeamIdArrayQuery = `
+SELECT u.*, m.team_id
+FROM users u
+JOIN user_team_membership m ON u.user_id = m.user_id
+WHERE m.team_id = ANY($1);
+`

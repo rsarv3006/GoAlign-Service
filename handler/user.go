@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
@@ -80,6 +81,75 @@ func getUsersByTeamId(teamId uuid.UUID) ([]model.User, error) {
 		}
 
 		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func getUsersByIdArray(userIds []uuid.UUID) (map[uuid.UUID]model.User, error) {
+	query := database.UserGetUsersByIdArrayQuery
+	stmt, err := database.DB.Prepare(query)
+
+	users := make(map[uuid.UUID]model.User)
+
+	if err != nil {
+		return users, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(pq.Array(userIds))
+
+	if err != nil {
+		return users, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var user model.User
+		err := rows.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
+
+		if err != nil {
+			return users, err
+		}
+
+		users[user.UserId] = user
+	}
+
+	return users, nil
+}
+
+func getUsersByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.User, error) {
+	query := database.UserGetUsersByTeamIdArrayQuery
+	stmt, err := database.DB.Prepare(query)
+
+	users := make(map[uuid.UUID][]model.User)
+
+	if err != nil {
+		return users, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(pq.Array(teamIds))
+
+	if err != nil {
+		return users, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var user model.User
+		var teamId uuid.UUID
+		err := rows.Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt, &teamId)
+
+		if err != nil {
+			return users, err
+		}
+
+		users[teamId] = append(users[teamId], user)
 	}
 
 	return users, nil

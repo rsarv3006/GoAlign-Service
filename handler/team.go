@@ -30,7 +30,8 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 
 	defer rows.Close()
 
-	teams := make([]model.TeamReturnWithUsersAndTasks, 0)
+	teams := make([]model.Team, 0)
+	teamIds := make([]uuid.UUID, 0)
 
 	for rows.Next() {
 		team := model.Team{}
@@ -48,28 +49,38 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		teamUsers, err := getUsersByTeamId(team.TeamId)
+		teams = append(teams, team)
+		teamIds = append(teamIds, team.TeamId)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
+	users, err := getUsersByTeamIdArray(teamIds)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	tasks, err := getTasksByTeamIdArray(teamIds)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	teamReturnArray := make([]model.TeamReturnWithUsersAndTasks, 0)
+
+	for _, team := range teams {
+		teamValue := team
+		team := model.TeamReturnWithUsersAndTasks{
+			Team:  &teamValue,
+			Users: users[team.TeamId],
+			Tasks: tasks[team.TeamId],
 		}
 
-		teamTasks, err := getTasksByTeamId(team.TeamId)
-
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
-
-		teams = append(teams, model.TeamReturnWithUsersAndTasks{
-			Team:  &team,
-			Users: teamUsers,
-			Tasks: teamTasks,
-		})
+		teamReturnArray = append(teamReturnArray, team)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Success",
-		"teams":   teams,
+		"teams":   teamReturnArray,
 	})
 }
 
@@ -164,8 +175,8 @@ func CreateTeam(c *fiber.Ctx) error {
 	})
 }
 
-func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
-	query := database.TeamGetByIdQueryString
+func getTeamsByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID]model.TeamReturnWithUsersAndTasks, error) {
+	query := database.TeamGetByIdsQueryString
 	stmt, err := database.DB.Prepare(query)
 
 	if err != nil {
@@ -174,32 +185,68 @@ func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
 
 	defer stmt.Close()
 
-	team := new(model.Team)
-	err = stmt.QueryRow(teamId).Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
+	rows, err := stmt.Query(pq.Array(teamIds))
 
 	if err != nil {
 		return nil, err
 	}
 
-	teamUsers, err := getUsersByTeamId(team.TeamId)
+	defer rows.Close()
+
+	teams := make([]model.Team, 0)
+
+	for rows.Next() {
+		team := model.Team{}
+		err := rows.Scan(&team.TeamId, &team.TeamName, &team.CreatorUserId, &team.Status, &team.TeamManagerId, &team.CreatedAt, &team.UpdatedAt)
+
+		if err != nil {
+			return nil, err
+		}
+
+		teams = append(teams, team)
+	}
+
+	tasks, err := getTasksByTeamIdArray(teamIds)
 
 	if err != nil {
 		return nil, err
 	}
 
-	teamTasks, err := getTasksByTeamId(team.TeamId)
+	users, err := getUsersByTeamIdArray(teamIds)
 
 	if err != nil {
 		return nil, err
 	}
 
-	teamReturn := model.TeamReturnWithUsersAndTasks{
-		Team:  team,
-		Users: teamUsers,
-		Tasks: teamTasks,
+	teamReturnMap := make(map[uuid.UUID]model.TeamReturnWithUsersAndTasks)
+
+	for _, team := range teams {
+		teamReturn := model.TeamReturnWithUsersAndTasks{
+			Team:  &team,
+			Users: users[team.TeamId],
+			Tasks: tasks[team.TeamId],
+		}
+
+		teamReturnMap[team.TeamId] = teamReturn
 	}
 
-	return &teamReturn, nil
+	return teamReturnMap, nil
+}
+
+func getTeamById(teamId uuid.UUID) (*model.TeamReturnWithUsersAndTasks, error) {
+	teams, err := getTeamsByTeamIdArray([]uuid.UUID{teamId})
+
+	if err != nil {
+		return nil, err
+	}
+
+	team, ok := teams[teamId]
+
+	if !ok {
+		return nil, errors.New("Team not found")
+	}
+
+	return &team, nil
 }
 
 func DeleteTeam(c *fiber.Ctx) error {

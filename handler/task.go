@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
@@ -205,7 +206,9 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 
 	defer rows.Close()
 
-	tasks := make([]*model.TaskReturnWithTaskEntries, 0)
+	tasks := make([]*model.Task, 0)
+	userIds := make([]uuid.UUID, 0)
+	taskIds := make([]uuid.UUID, 0)
 
 	for rows.Next() {
 		task := new(model.Task)
@@ -236,30 +239,36 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		taskEntries, err := getTaskEntriesByTaskId(task.TaskId)
+		tasks = append(tasks, task)
+		userIds = append(userIds, task.CreatorId)
+		taskIds = append(taskIds, task.TaskId)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
+	users, err := getUsersByIdArray(userIds)
 
-		creator, err := getUserById(task.CreatorId)
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
+	taskEntries, err := getTaskEntriesByTaskIdArray(taskIds)
 
-		taskReturnWithTaskEntries := model.TaskReturnWithTaskEntries{
-			Task:        task,
-			TaskEntries: taskEntries,
-			Creator:     creator,
-		}
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
-		tasks = append(tasks, &taskReturnWithTaskEntries)
+	tasksWithTaskEntries := make([]*model.TaskReturnWithTaskEntries, 0)
+	for _, task := range tasks {
+		taskObjToReturn := new(model.TaskReturnWithTaskEntries)
+		taskObjToReturn.Task = task
+		taskObjToReturn.Creator = users[task.CreatorId]
+		taskObjToReturn.TaskEntries = taskEntries[task.TaskId]
+
+		tasksWithTaskEntries = append(tasksWithTaskEntries, taskObjToReturn)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Tasks retrieved successfully",
-		"tasks":   tasks,
+		"tasks":   tasksWithTaskEntries,
 	})
 }
 
@@ -314,7 +323,9 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, erro
 
 	defer rows.Close()
 
-	tasks := []model.TaskReturnWithTaskEntries{}
+	tasks := []model.Task{}
+	creatorIds := []uuid.UUID{}
+	taskIds := []uuid.UUID{}
 
 	for rows.Next() {
 		task := new(model.Task)
@@ -345,28 +356,134 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, erro
 		task.IntervalBetweenWindows = intervalBetweenWindows
 		task.WindowDuration = windowDuration
 
-		taskEntries, err := getTaskEntriesByTaskId(task.TaskId)
-
 		if err != nil {
 			return nil, err
 		}
 
-		creator, err := getUserById(task.CreatorId)
-
-		if err != nil {
-			return nil, err
-		}
-
-		taskReturn := model.TaskReturnWithTaskEntries{
-			Task:        task,
-			Creator:     creator,
-			TaskEntries: taskEntries,
-		}
-
-		tasks = append(tasks, taskReturn)
+		creatorIds = append(creatorIds, task.CreatorId)
+		tasks = append(tasks, *task)
+		taskIds = append(taskIds, task.TaskId)
 	}
 
-	return tasks, nil
+	creators, err := getUsersByIdArray(creatorIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskEntriesMap, err := getTaskEntriesByTaskIdArray(taskIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskReturnWithTaskEntries := []model.TaskReturnWithTaskEntries{}
+
+	for _, task := range tasks {
+		taskReturnObj := model.TaskReturnWithTaskEntries{
+			Task:        &task,
+			TaskEntries: taskEntriesMap[task.TaskId],
+			Creator:     creators[task.CreatorId],
+		}
+
+		taskReturnWithTaskEntries = append(taskReturnWithTaskEntries, taskReturnObj)
+	}
+
+	return taskReturnWithTaskEntries, nil
+}
+
+func getTasksByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.TaskReturnWithTaskEntries, error) {
+	query := database.TaskGetTasksByTeamIdArrayQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(pq.Array(teamIds))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	tasks := []model.Task{}
+	creatorIds := []uuid.UUID{}
+	taskIds := []uuid.UUID{}
+
+	for rows.Next() {
+		task := new(model.Task)
+		intervalBetweenWindows := model.IntervalObj{}
+		windowDuration := model.IntervalObj{}
+
+		err := rows.Scan(&task.TaskId,
+			&task.TaskName,
+			&task.Notes,
+			&task.StartDate,
+			&task.EndDate,
+			&task.RequiredCompletionsNeeded,
+			&task.CompletionCount,
+			&intervalBetweenWindows.IntervalCount,
+			&intervalBetweenWindows.IntervalUnit,
+			&windowDuration.IntervalCount,
+			&windowDuration.IntervalUnit,
+			&task.TeamId,
+			&task.CreatorId,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+			&task.Status)
+
+		if err != nil {
+			return nil, err
+		}
+
+		task.IntervalBetweenWindows = intervalBetweenWindows
+		task.WindowDuration = windowDuration
+
+		if err != nil {
+			return nil, err
+		}
+
+		creatorIds = append(creatorIds, task.CreatorId)
+		tasks = append(tasks, *task)
+		taskIds = append(taskIds, task.TaskId)
+	}
+
+	creators, err := getUsersByIdArray(creatorIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskEntriesMap, err := getTaskEntriesByTaskIdArray(taskIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskReturnWithTaskEntries := []model.TaskReturnWithTaskEntries{}
+
+	for _, task := range tasks {
+		newTask := task
+		taskReturnObj := model.TaskReturnWithTaskEntries{
+			Task:        &newTask,
+			TaskEntries: taskEntriesMap[task.TaskId],
+			Creator:     creators[task.CreatorId],
+		}
+
+		taskReturnWithTaskEntries = append(taskReturnWithTaskEntries, taskReturnObj)
+	}
+
+	taskReturnWithTaskEntriesMap := map[uuid.UUID][]model.TaskReturnWithTaskEntries{}
+
+	for _, task := range taskReturnWithTaskEntries {
+		taskReturnWithTaskEntriesMap[task.Task.TeamId] = append(taskReturnWithTaskEntriesMap[task.Task.TeamId], task)
+	}
+
+	return taskReturnWithTaskEntriesMap, nil
 }
 
 func deleteTasksByTeamId(teamId uuid.UUID) error {
@@ -473,7 +590,7 @@ func deleteTaskByTaskId(taskId uuid.UUID) error {
 }
 
 func GetTaskEndpoint(c *fiber.Ctx) error {
-	currentUser := c.Locals("currentUser").(model.User)
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	taskId, err := uuid.Parse(c.Params("taskId"))
 
@@ -505,9 +622,27 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 		})
 	}
 
+	taskEntries, err := getTaskEntriesByTaskId(taskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	creator, err := getUserById(task.CreatorId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	taskReturnObj := model.TaskReturnWithTaskEntries{
+		Task:        task,
+		TaskEntries: taskEntries,
+		Creator:     creator,
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Task retrieved successfully",
-		"task":    task,
+		"task":    taskReturnObj,
 	})
 }
 
@@ -554,7 +689,7 @@ func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 }
 
 func UpdateTaskEndpoint(c *fiber.Ctx) error {
-	currentUser := c.Locals("currentUser").(model.User)
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	taskUpdateDto := new(model.TaskUpdateDto)
 
@@ -589,7 +724,61 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 
 	defer stmt.Close()
 
-	rows, err := stmt.Query(taskUpdateDto.TaskName, taskUpdateDto.Notes, taskUpdateDto.StartDate, taskUpdateDto.EndDate, taskUpdateDto.RequiredCompletionsNeeded, taskUpdateDto.IntervalBetweenWindowsCount, taskUpdateDto.IntervalBetweenWindowsUnit, taskUpdateDto.WindowDurationCount, taskUpdateDto.WindowDurationUnit, taskUpdateDto.TaskId)
+	taskName := taskToUpdate.TaskName
+	if taskUpdateDto.TaskName != nil {
+		taskName = *taskUpdateDto.TaskName
+	}
+
+	notes := taskToUpdate.Notes
+	if taskUpdateDto.Notes != nil {
+		notes = *taskUpdateDto.Notes
+	}
+
+	startDate := taskToUpdate.StartDate
+	if taskUpdateDto.StartDate != nil {
+		startDate = *taskUpdateDto.StartDate
+	}
+
+	endDate := taskToUpdate.EndDate
+	if taskUpdateDto.EndDate != nil {
+		endDate = taskUpdateDto.EndDate
+	}
+
+	requiredCompletionsNeeded := taskToUpdate.RequiredCompletionsNeeded
+	if taskUpdateDto.RequiredCompletionsNeeded != nil {
+		requiredCompletionsNeeded = *taskUpdateDto.RequiredCompletionsNeeded
+	}
+
+	invtervalBetweenWindowsCount := taskToUpdate.IntervalBetweenWindows.IntervalCount
+	if taskUpdateDto.IntervalBetweenWindowsCount != nil {
+		invtervalBetweenWindowsCount = *taskUpdateDto.IntervalBetweenWindowsCount
+	}
+
+	invtervalBetweenWindowsUnit := taskToUpdate.IntervalBetweenWindows.IntervalUnit
+	if taskUpdateDto.IntervalBetweenWindowsUnit != nil {
+		invtervalBetweenWindowsUnit = *taskUpdateDto.IntervalBetweenWindowsUnit
+	}
+
+	windowDurationCount := taskToUpdate.WindowDuration.IntervalCount
+	if taskUpdateDto.WindowDurationCount != nil {
+		windowDurationCount = *taskUpdateDto.WindowDurationCount
+	}
+
+	windowDurationUnit := taskToUpdate.WindowDuration.IntervalUnit
+	if taskUpdateDto.WindowDurationUnit != nil {
+		windowDurationUnit = *taskUpdateDto.WindowDurationUnit
+	}
+
+	rows, err := stmt.Query(taskName,
+		notes,
+		startDate,
+		endDate,
+		requiredCompletionsNeeded,
+		invtervalBetweenWindowsCount,
+		invtervalBetweenWindowsUnit,
+		windowDurationCount,
+		windowDurationUnit,
+		taskUpdateDto.TaskId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -629,7 +818,7 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 		message = "Task updated successfully and marked as complete"
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": message,
 	})
 }

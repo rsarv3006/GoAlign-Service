@@ -263,7 +263,9 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 
 	defer rows.Close()
 
-	teamInvites := make([]model.TeamInviteReturnWithCreator, 0)
+	teamInvites := make([]model.TeamInvite, 0)
+	inviteCreatorIds := make([]uuid.UUID, 0)
+	teamIds := make([]uuid.UUID, 0)
 
 	for rows.Next() {
 		var teamInvite model.TeamInvite
@@ -273,25 +275,33 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		teamInviteCreator, err := getUserById(teamInvite.InviteCreatorId)
+		teamInvites = append(teamInvites, teamInvite)
+		inviteCreatorIds = append(inviteCreatorIds, teamInvite.InviteCreatorId)
+		teamIds = append(teamIds, teamInvite.TeamId)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
+	inviteCreators, err := getUsersByIdArray(inviteCreatorIds)
 
-		team, err := getTeamById(teamInvite.TeamId)
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
+	teams, err := getTeamsByTeamIdArray(teamIds)
 
-		teamInviteReturnWithCreator := model.TeamInviteReturnWithCreator{
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	teamInvitesWithData := make([]model.TeamInviteReturnWithCreator, 0)
+
+	for _, teamInvite := range teamInvites {
+		teamInvite := model.TeamInviteReturnWithCreator{
 			TeamInvite:    &teamInvite,
-			InviteCreator: teamInviteCreator,
-			Team:          *team,
+			InviteCreator: inviteCreators[teamInvite.InviteCreatorId],
+			Team:          teams[teamInvite.TeamId],
 		}
 
-		teamInvites = append(teamInvites, teamInviteReturnWithCreator)
+		teamInvitesWithData = append(teamInvitesWithData, teamInvite)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -417,7 +427,9 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 
 	defer rows.Close()
 
-	teamInvites := make([]model.TeamInviteReturnWithCreator, 0)
+	teamInvites := make([]model.TeamInvite, 0)
+	creatorIds := make([]uuid.UUID, 0)
+	teamIds := make([]uuid.UUID, 0)
 
 	for rows.Next() {
 		var teamInvite model.TeamInvite
@@ -427,30 +439,38 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 			return sendInternalServerErrorResponse(c, err)
 		}
 
-		teamInviteCreator, err := getUserById(teamInvite.InviteCreatorId)
+		teamInvites = append(teamInvites, teamInvite)
+		creatorIds = append(creatorIds, teamInvite.InviteCreatorId)
+		teamIds = append(teamIds, teamInvite.TeamId)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
+	creators, err := getUsersByIdArray(creatorIds)
 
-		team, err := getTeamById(teamInvite.TeamId)
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
 
-		if err != nil {
-			return sendInternalServerErrorResponse(c, err)
-		}
+	teams, err := getTeamsByTeamIdArray(teamIds)
 
-		teamInviteReturnWithCreator := model.TeamInviteReturnWithCreator{
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	teamInvitesWithData := make([]model.TeamInviteReturnWithCreator, 0)
+
+	for _, teamInvite := range teamInvites {
+		teamInvite := model.TeamInviteReturnWithCreator{
 			TeamInvite:    &teamInvite,
-			Team:          *team,
-			InviteCreator: teamInviteCreator,
+			InviteCreator: creators[teamInvite.InviteCreatorId],
+			Team:          teams[teamInvite.TeamId],
 		}
 
-		teamInvites = append(teamInvites, teamInviteReturnWithCreator)
+		teamInvitesWithData = append(teamInvitesWithData, teamInvite)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":     "Team invites by team id",
-		"teamInvites": teamInvites,
+		"teamInvites": teamInvitesWithData,
 	})
 }
 

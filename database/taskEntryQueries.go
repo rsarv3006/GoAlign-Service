@@ -64,3 +64,8 @@ UPDATE task_entries
 SET status = 'completed'
 WHERE task_id = $1 AND status = 'active';
 `
+
+const TaskEntriesGetByTaskIdArrayQuery = `
+SELECT * FROM task_entries
+WHERE task_id = ANY($1);
+`

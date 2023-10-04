@@ -88,3 +88,8 @@ SET completion_count = completion_count + 1
 WHERE task_id = $1
 RETURNING *
 `
+
+const TaskGetTasksByTeamIdArrayQuery = `
+SELECT * FROM tasks
+WHERE team_id = ANY($1);
+`

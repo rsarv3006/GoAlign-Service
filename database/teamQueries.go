@@ -39,3 +39,7 @@ const TeamUpdateTeamManagerQueryString = `
   WHERE team_id = $2
   RETURNING *;
 `
+
+const TeamGetByIdsQueryString = `
+select * from teams where team_id = ANY($1);
+`

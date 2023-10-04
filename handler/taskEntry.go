@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/helper"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
@@ -99,8 +100,6 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 
 	defer stmt.Close()
 
-	taskEntries := make([]model.TaskEntryReturnWithAssignedUser, 0)
-
 	rows, err := stmt.Query(teamId)
 
 	if err != nil {
@@ -108,6 +107,9 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 	}
 
 	defer rows.Close()
+
+	userIds := make([]uuid.UUID, 0)
+	taskEntries := make([]model.TaskEntry, 0)
 
 	for rows.Next() {
 		taskEntry := new(model.TaskEntry)
@@ -118,21 +120,34 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 			return nil, err
 		}
 
-		assignedUser, err := getUserById(taskEntry.AssignedUserId)
-
 		if err != nil {
 			return nil, err
 		}
 
-		taskEntryReturnWithCreator := model.TaskEntryReturnWithAssignedUser{
-			TaskEntry:    taskEntry,
+		taskEntries = append(taskEntries, *taskEntry)
+		userIds = append(userIds, taskEntry.AssignedUserId)
+	}
+
+	users, err := getUsersByIdArray(userIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskEntriesWithAssignedUsers := make([]model.TaskEntryReturnWithAssignedUser, 0)
+
+	for _, taskEntry := range taskEntries {
+		assignedUser := users[taskEntry.AssignedUserId]
+
+		taskEntryWithAssignedUser := model.TaskEntryReturnWithAssignedUser{
+			TaskEntry:    &taskEntry,
 			AssignedUser: assignedUser,
 		}
 
-		taskEntries = append(taskEntries, taskEntryReturnWithCreator)
+		taskEntriesWithAssignedUsers = append(taskEntriesWithAssignedUsers, taskEntryWithAssignedUser)
 	}
 
-	return taskEntries, nil
+	return taskEntriesWithAssignedUsers, nil
 }
 
 func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
@@ -370,6 +385,62 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func getTaskEntriesByTaskIdArray(taskIds []uuid.UUID) (map[uuid.UUID][]model.TaskEntryReturnWithAssignedUser, error) {
+	query := database.TaskEntriesGetByTaskIdArrayQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(pq.Array(taskIds))
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	taskEntries := make([]model.TaskEntry, 0)
+
+	userIds := make([]uuid.UUID, 0)
+
+	for rows.Next() {
+		taskEntry := new(model.TaskEntry)
+
+		err := rows.Scan(&taskEntry.TaskEntryId, &taskEntry.StartDate, &taskEntry.EndDate, &taskEntry.Notes, &taskEntry.AssignedUserId, &taskEntry.Status, &taskEntry.CompletedDate, &taskEntry.TaskId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskEntries = append(taskEntries, *taskEntry)
+		userIds = append(userIds, taskEntry.AssignedUserId)
+	}
+
+	users, err := getUsersByIdArray(userIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taskEntriesMap := make(map[uuid.UUID][]model.TaskEntryReturnWithAssignedUser)
+
+	for _, taskEntry := range taskEntries {
+		newTaskEntry := taskEntry
+		taskEntryWithAssignedUser := model.TaskEntryReturnWithAssignedUser{
+			TaskEntry:    &newTaskEntry,
+			AssignedUser: users[taskEntry.AssignedUserId],
+		}
+
+		taskEntriesMap[taskEntry.TaskId] = append(taskEntriesMap[taskEntry.TaskId], taskEntryWithAssignedUser)
+	}
+
+	return taskEntriesMap, nil
 }
 
 func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssignedUser, error) {

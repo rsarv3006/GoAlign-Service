@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"log"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
@@ -10,18 +8,16 @@ import (
 )
 
 func LogEventEndpoint(c *fiber.Ctx) error {
-	currentUser := c.Locals("currentUser").(model.User)
+	currentUser := c.Locals("currentUser").(*model.User)
 
 	logCreateDto := new(model.LogCreateDto)
 	if err := c.BodyParser(logCreateDto); err != nil {
-		log.Println(err)
 		return sendBadRequestResponse(c, err, "Error parsing request body")
 	}
 
 	err := logEvent(logCreateDto, currentUser.UserId)
 
 	if err != nil {
-		log.Println(err)
 		return sendInternalServerErrorResponse(c, err)
 	}
 
