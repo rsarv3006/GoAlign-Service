@@ -50,7 +50,7 @@ WHERE task_entry_id = $1;
 
 const TaskEntriesGetByTaskIdQuery = `
 SELECT * FROM task_entries
-WHERE task_id = $1;
+WHERE task_id = $1 LIMIT 20;
 `
 
 const TaskEntryUpdateAssignedUserIdQuery = `
@@ -67,5 +67,5 @@ WHERE task_id = $1 AND status = 'active';
 
 const TaskEntriesGetByTaskIdArrayQuery = `
 SELECT * FROM task_entries
-WHERE task_id = ANY($1);
+WHERE task_id = ANY($1) LIMIT 20;
 `

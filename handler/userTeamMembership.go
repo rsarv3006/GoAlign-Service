@@ -138,6 +138,18 @@ func deleteUserTeamMembershipsByUserId(userId uuid.UUID) error {
 	return nil
 }
 
+func isAllowedToDeleteUserFromTeam(currentUser *model.User, userId uuid.UUID, teamManagerId uuid.UUID) bool {
+	if teamManagerId == currentUser.UserId {
+		return true
+	}
+
+	if currentUser.UserId == userId {
+		return true
+	}
+
+	return false
+}
+
 func RemoveUserFromTeamEndpoint(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
@@ -151,10 +163,6 @@ func RemoveUserFromTeamEndpoint(c *fiber.Ctx) error {
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
-	}
-
-	if team.TeamManagerId != currentUser.UserId {
-		return sendForbiddenResponse(c)
 	}
 
 	userId, err := uuid.Parse(c.Params("userId"))
@@ -177,6 +185,13 @@ func RemoveUserFromTeamEndpoint(c *fiber.Ctx) error {
 	if team.TeamManagerId == userId {
 		err = errors.New("Cannot remove team manager from team")
 		return sendBadRequestResponse(c, err, "Cannot remove team manager from team")
+	}
+
+	isAllowedToDeleteTeamInvite := isAllowedToDeleteUserFromTeam(currentUser, userId, team.TeamManagerId)
+
+	if !isAllowedToDeleteTeamInvite {
+		err = errors.New("Not allowed to delete user from team")
+		return sendBadRequestResponse(c, err, "Not allowed to delete user from team")
 	}
 
 	query := database.UserTeamMembershipDeleteQueryString

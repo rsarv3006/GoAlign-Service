@@ -21,6 +21,8 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Error parsing body")
 	}
 
+	teamInviteEmail := strings.ToLower(teamInviteCreateDto.Email)
+
 	query := database.TeamInviteCreateQueryString
 	stmt, err := database.DB.Prepare(query)
 
@@ -30,7 +32,7 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	defer stmt.Close()
 
-	isValidEmailAddress := helper.IsValidEmailAddress(teamInviteCreateDto.Email)
+	isValidEmailAddress := helper.IsValidEmailAddress(teamInviteEmail)
 
 	if !isValidEmailAddress {
 		return sendBadRequestResponse(c, errors.New("Invalid email address"), "Invalid email address")
@@ -45,7 +47,7 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	defer isAlreadyInTeamStmt.Close()
 
-	isAlreadyInTeamRows, err := isAlreadyInTeamStmt.Query(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email)
+	isAlreadyInTeamRows, err := isAlreadyInTeamStmt.Query(teamInviteCreateDto.TeamId, teamInviteEmail)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
@@ -71,7 +73,7 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	defer isAlreadyInvitedStmt.Close()
 
-	isAlreadyInvitedRows, err := isAlreadyInvitedStmt.Query(teamInviteCreateDto.Email, teamInviteCreateDto.TeamId)
+	isAlreadyInvitedRows, err := isAlreadyInvitedStmt.Query(teamInviteEmail, teamInviteCreateDto.TeamId)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
@@ -89,7 +91,7 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	defer isAlreadyInvitedStmt.Close()
 
-	_, err = stmt.Exec(teamInviteCreateDto.TeamId, teamInviteCreateDto.Email, currentUser.UserId)
+	_, err = stmt.Exec(teamInviteCreateDto.TeamId, teamInviteEmail, currentUser.UserId)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
@@ -255,7 +257,7 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 
 	defer stmt.Close()
 
-	rows, err := stmt.Query(currentUser.Email)
+	rows, err := stmt.Query(strings.ToLower(currentUser.Email))
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -306,7 +308,7 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Team invites for current user",
-		"invites": teamInvites,
+		"invites": teamInvitesWithData,
 	})
 }
 
@@ -429,7 +431,6 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 
 	teamInvites := make([]model.TeamInvite, 0)
 	creatorIds := make([]uuid.UUID, 0)
-	teamIds := make([]uuid.UUID, 0)
 
 	for rows.Next() {
 		var teamInvite model.TeamInvite
@@ -441,7 +442,6 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 
 		teamInvites = append(teamInvites, teamInvite)
 		creatorIds = append(creatorIds, teamInvite.InviteCreatorId)
-		teamIds = append(teamIds, teamInvite.TeamId)
 	}
 
 	creators, err := getUsersByIdArray(creatorIds)
@@ -449,8 +449,6 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
 	}
-
-	teams, err := getTeamsByTeamIdArray(teamIds)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -462,7 +460,7 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 		teamInvite := model.TeamInviteReturnWithCreator{
 			TeamInvite:    &teamInvite,
 			InviteCreator: creators[teamInvite.InviteCreatorId],
-			Team:          teams[teamInvite.TeamId],
+			Team:          *team,
 		}
 
 		teamInvitesWithData = append(teamInvitesWithData, teamInvite)
@@ -484,7 +482,26 @@ func deleteTeamInvitesByUserEmail(email string) error {
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(email)
+	_, err = stmt.Exec(strings.ToLower(email))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteTeamInvitesByTeamId(teamId uuid.UUID) error {
+	query := database.TeamInviteDeleteByTeamIdQueryString
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(teamId)
 
 	if err != nil {
 		return err

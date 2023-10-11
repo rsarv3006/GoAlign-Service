@@ -69,10 +69,23 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 
 	for _, team := range teams {
 		teamValue := team
+
+		teamTasks, tasksOk := tasks[team.TeamId]
+
+		if !tasksOk {
+			teamTasks = make([]model.TaskReturnWithTaskEntries, 0)
+		}
+
+		teamUsers, usersOk := users[team.TeamId]
+
+		if !usersOk {
+			teamUsers = make([]model.User, 0)
+		}
+
 		team := model.TeamReturnWithUsersAndTasks{
 			Team:  &teamValue,
-			Users: users[team.TeamId],
-			Tasks: tasks[team.TeamId],
+			Users: teamUsers,
+			Tasks: teamTasks,
 		}
 
 		teamReturnArray = append(teamReturnArray, team)
@@ -221,10 +234,22 @@ func getTeamsByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID]model.TeamReturnW
 	teamReturnMap := make(map[uuid.UUID]model.TeamReturnWithUsersAndTasks)
 
 	for _, team := range teams {
+		teamUsers, usersOk := users[team.TeamId]
+
+		if !usersOk {
+			teamUsers = make([]model.User, 0)
+		}
+
+		teamTasks, tasksOk := tasks[team.TeamId]
+
+		if !tasksOk {
+			teamTasks = make([]model.TaskReturnWithTaskEntries, 0)
+		}
+
 		teamReturn := model.TeamReturnWithUsersAndTasks{
 			Team:  &team,
-			Users: users[team.TeamId],
-			Tasks: tasks[team.TeamId],
+			Users: teamUsers,
+			Tasks: teamTasks,
 		}
 
 		teamReturnMap[team.TeamId] = teamReturn
@@ -287,6 +312,12 @@ func DeleteTeam(c *fiber.Ctx) error {
 	}
 
 	err = deleteTasksByTeamId(teamId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
+	err = deleteTeamInvitesByTeamId(teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)

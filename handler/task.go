@@ -468,9 +468,16 @@ func getTasksByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.TaskRetur
 
 	for _, task := range tasks {
 		newTask := task
+
+		taskEntriesForTask, ok := taskEntriesMap[task.TaskId]
+
+		if !ok {
+			taskEntriesForTask = make([]model.TaskEntryReturnWithAssignedUser, 0)
+		}
+
 		taskReturnObj := model.TaskReturnWithTaskEntries{
 			Task:        &newTask,
-			TaskEntries: taskEntriesMap[task.TaskId],
+			TaskEntries: taskEntriesForTask,
 			Creator:     creators[task.CreatorId],
 		}
 
