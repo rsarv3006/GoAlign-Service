@@ -42,3 +42,8 @@ FROM users u
 JOIN user_team_membership m ON u.user_id = m.user_id
 WHERE m.team_id = ANY($1);
 `
+
+const UserDeleteUserLoginRequestsByUserIdQuery = `
+DELETE FROM login_requests
+WHERE user_id = $1;
+`

@@ -34,6 +34,12 @@ func DeleteUserEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	err = deleteUserLoginRequestsByUserId(userId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
 	query := database.UserDeleteUserQuery
 	stmt, err := database.DB.Prepare(query)
 
@@ -174,4 +180,23 @@ func getUserById(userId uuid.UUID) (model.User, error) {
 	}
 
 	return user, nil
+}
+
+func deleteUserLoginRequestsByUserId(userId uuid.UUID) error {
+	query := database.UserDeleteUserLoginRequestsByUserIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(userId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

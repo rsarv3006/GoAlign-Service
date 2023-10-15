@@ -2,7 +2,6 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
@@ -13,8 +12,7 @@ func GetStatsByTeamIdEndpoint(c *fiber.Ctx) error {
 	teamId, err := uuid.Parse(c.Params("teamId"))
 
 	if err != nil {
-		log.Error(err)
-		return sendBadRequestResponse(c, err, "Error parsing teamId")
+		return sendBadRequestResponse(c, err, "Failed to parse teamId")
 	}
 
 	teamMembers, err := getUserTeamMemberships(teamId)
