@@ -69,3 +69,8 @@ const TaskEntriesGetByTaskIdArrayQuery = `
 SELECT * FROM task_entries
 WHERE task_id = ANY($1) LIMIT 20;
 `
+
+const TaskEntryDeleteByTaskIdQuery = `
+DELETE FROM task_entries
+WHERE task_id = $1;
+`

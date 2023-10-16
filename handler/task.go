@@ -567,6 +567,12 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 		})
 	}
 
+	err = deleteTaskEntriesByTaskId(taskId)
+
+	if err != nil {
+		return sendInternalServerErrorResponse(c, err)
+	}
+
 	err = deleteTaskByTaskId(taskId)
 
 	if err != nil {

@@ -150,6 +150,25 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 	return taskEntriesWithAssignedUsers, nil
 }
 
+func deleteTaskEntriesByTaskId(taskId uuid.UUID) error {
+	query := database.TaskEntryDeleteByTaskIdQuery
+	stmt, err := database.DB.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(taskId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
 	query := database.TaskEntryDeleteByTeamIdQuery
 	stmt, err := database.DB.Prepare(query)
