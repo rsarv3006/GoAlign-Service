@@ -707,7 +707,7 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 	taskUpdateDto := new(model.TaskUpdateDto)
 
 	if err := c.BodyParser(taskUpdateDto); err != nil {
-		return sendBadRequestResponse(c, err, "error parsing body")
+		return sendBadRequestResponse(c, err, "Error parsing body")
 	}
 
 	taskId := taskUpdateDto.TaskId
@@ -715,6 +715,10 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
+	}
+
+	if taskToUpdate.Status == "completed" {
+		return sendBadRequestResponse(c, err, "Cannot edit a completed task")
 	}
 
 	teamId := taskToUpdate.TeamId
