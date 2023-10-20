@@ -217,7 +217,6 @@ func FetchCode(c *fiber.Ctx) error {
 	}
 
 	if !isUserObjectNotNil(&user) {
-		log.Println(err)
 		return sendUnauthorizedResponse(c)
 	}
 
