@@ -75,6 +75,16 @@ func Register(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	environment := c.Locals("Env").(string)
+
+	if environment == "production" {
+		didSucceed, err := auth.SendEmailWithCode(c, loginRequest.LoginRequestToken, user.UserName, user.Email)
+
+		if err != nil || !didSucceed {
+			return sendInternalServerErrorResponse(c, err)
+		}
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"login_request_id": loginRequest.LoginRequestId, "user_id": loginRequest.UserId})
 }
 
