@@ -3,8 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"gitlab.com/donutsahoy/yourturn-fiber/config"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"gitlab.com/donutsahoy/yourturn-fiber/config"
 )
 
 var DB *sql.DB
@@ -28,17 +30,18 @@ func Connect() error {
 		return err
 	}
 
-	fmt.Println("Creating tables if needed...")
-	CreateUserTable()
-	CreateTeamTable()
-	CreateUserTeamMembershipTable()
-	CreateTeamSettingsTable()
-	CreateTaskTable()
-	CreateTaskEntryTable()
-	CreateTeamInviteTable()
-	CreateAppLogsTable()
-	CreateLoginRequestsTable()
-
+	if !fiber.IsChild() {
+		fmt.Println("Creating tables if needed...")
+		CreateUserTable()
+		CreateTeamTable()
+		CreateUserTeamMembershipTable()
+		CreateTeamSettingsTable()
+		CreateTaskTable()
+		CreateTaskEntryTable()
+		CreateTeamInviteTable()
+		CreateAppLogsTable()
+		CreateLoginRequestsTable()
+	}
 	fmt.Println("Connection Opened to Database")
 	return nil
 }

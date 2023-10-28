@@ -22,7 +22,9 @@ func main() {
 
 	println("Connected to database...")
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		Prefork: true,
+	})
 
 	println("Initializing emailer...")
 	brevoClient := initializeEmailer()
