@@ -266,6 +266,13 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 		tasksWithTaskEntries = append(tasksWithTaskEntries, taskObjToReturn)
 	}
 
+	defer func() {
+		tasksWithTaskEntries = make([]*model.TaskReturnWithTaskEntries, 0)
+		tasks = make([]*model.Task, 0)
+		userIds = make([]uuid.UUID, 0)
+		taskIds = make([]uuid.UUID, 0)
+	}()
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Tasks retrieved successfully",
 		"tasks":   tasksWithTaskEntries,
