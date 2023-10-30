@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -89,18 +90,11 @@ func CreateTask(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Only the team creator can create tasks for the team")
 	}
 
-	query := database.TaskCreateQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	task := new(model.Task)
 
-	rows, err := stmt.Query(
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskCreateQuery,
 		taskName,
 		notes,
 		taskDto.StartDate,
@@ -190,15 +184,8 @@ func GetTasksForUserEndpoint(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TaskGetTasksByAssignedUserIdQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(currentUser.UserId)
+	rows, err := database.POOL.Query(context.Background(), query, currentUser.UserId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -313,16 +300,11 @@ func GetTasksByTeamIdEndpoint(c *fiber.Ctx) error {
 }
 
 func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, error) {
-	query := database.TaskGetTasksByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskGetTasksByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return nil, err
@@ -401,15 +383,8 @@ func getTasksByTeamId(teamId uuid.UUID) ([]model.TaskReturnWithTaskEntries, erro
 
 func getTasksByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.TaskReturnWithTaskEntries, error) {
 	query := database.TaskGetTasksByTeamIdArrayQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(pq.Array(teamIds))
+	rows, err := database.POOL.Query(context.Background(), query, pq.Array(teamIds))
 
 	if err != nil {
 		return nil, err
@@ -502,15 +477,8 @@ func getTasksByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.TaskRetur
 
 func deleteTasksByTeamId(teamId uuid.UUID) error {
 	query := database.TaskDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
+	_, err := database.POOL.Exec(context.Background(), query, teamId)
 
 	if err != nil {
 		return err
@@ -521,17 +489,10 @@ func deleteTasksByTeamId(teamId uuid.UUID) error {
 
 func isUserTheTeamManager(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
 	query := database.TeamGetByTeamIdAndManagerIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return false, err
-	}
-
-	defer stmt.Close()
 
 	var managerId uuid.UUID
 
-	err = stmt.QueryRow(teamId, userId).Scan(&managerId)
+	err := database.POOL.QueryRow(context.Background(), query, teamId, userId).Scan(&managerId)
 
 	if err != nil {
 		return false, err
@@ -591,16 +552,10 @@ func DeleteTaskByTaskIdEndpoint(c *fiber.Ctx) error {
 }
 
 func deleteTaskByTaskId(taskId uuid.UUID) error {
-	query := database.TaskDeleteByTaskIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(taskId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TaskDeleteByTaskIdQuery,
+		taskId)
 
 	if err != nil {
 		return err
@@ -668,20 +623,13 @@ func GetTaskEndpoint(c *fiber.Ctx) error {
 
 func getTaskByTaskId(taskId uuid.UUID) (*model.Task, error) {
 	query := database.TaskGetTaskByTaskIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
 
 	task := new(model.Task)
 
 	intervalBetweenWindows := model.IntervalObj{}
 	windowDuration := model.IntervalObj{}
 
-	err = stmt.QueryRow(taskId).Scan(&task.TaskId,
+	err := database.POOL.QueryRow(context.Background(), query, taskId).Scan(&task.TaskId,
 		&task.TaskName,
 		&task.Notes,
 		&task.StartDate,
@@ -739,15 +687,6 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 		return sendForbiddenResponse(c)
 	}
 
-	query := database.TaskUpdateByTaskIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	taskName := taskToUpdate.TaskName
 	if taskUpdateDto.TaskName != nil {
 		taskName = *taskUpdateDto.TaskName
@@ -793,7 +732,10 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 		windowDurationUnit = *taskUpdateDto.WindowDurationUnit
 	}
 
-	rows, err := stmt.Query(taskName,
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskUpdateByTaskIdQuery,
+		taskName,
 		notes,
 		startDate,
 		endDate,
@@ -849,15 +791,8 @@ func UpdateTaskEndpoint(c *fiber.Ctx) error {
 
 func incrementTaskCompletionCount(taskId uuid.UUID) error {
 	query := database.TaskIncrementCompletionCountQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(taskId)
+	_, err := database.POOL.Exec(context.Background(), query, taskId)
 
 	if err != nil {
 		return err
@@ -889,16 +824,10 @@ func canTaskBeMarkedAsComplete(taskId uuid.UUID) (bool, error) {
 }
 
 func markTaskAsComplete(taskId uuid.UUID) error {
-	query := database.TaskMarkTaskAsCompleteQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(taskId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TaskMarkTaskAsCompleteQuery,
+		taskId)
 
 	if err != nil {
 		return err
