@@ -27,6 +27,11 @@ func IsExpired() fiber.Handler {
 		}
 
 		c.Locals("currentUser", currentUser)
+
+		defer func() {
+			currentUser = nil
+		}()
+
 		return c.Next()
 
 	}
