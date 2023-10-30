@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -93,18 +95,12 @@ func getUsersByTeamId(teamId uuid.UUID) ([]model.User, error) {
 }
 
 func getUsersByIdArray(userIds []uuid.UUID) (map[uuid.UUID]model.User, error) {
-	query := database.UserGetUsersByIdArrayQuery
-	stmt, err := database.DB.Prepare(query)
-
 	users := make(map[uuid.UUID]model.User)
 
-	if err != nil {
-		return users, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(pq.Array(userIds))
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserGetUsersByIdArrayQuery,
+		pq.Array(userIds))
 
 	if err != nil {
 		return users, err

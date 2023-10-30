@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
@@ -407,16 +408,10 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 }
 
 func getTaskEntriesByTaskIdArray(taskIds []uuid.UUID) (map[uuid.UUID][]model.TaskEntryReturnWithAssignedUser, error) {
-	query := database.TaskEntriesGetByTaskIdArrayQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(pq.Array(taskIds))
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskEntriesGetByTaskIdArrayQuery,
+		pq.Array(taskIds))
 
 	if err != nil {
 		return nil, err
