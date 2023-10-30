@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -39,20 +40,14 @@ func Register(c *fiber.Ctx) error {
 	user.IsActive = true
 
 	query := database.UserCreateUserQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(
+	rows, err := database.POOL.Query(context.Background(), query,
 		user.UserName,
 		user.Email,
 	)
 
 	if err != nil {
+		log.Println(err)
 		if strings.Contains(err.Error(), `"users_email_key"`) {
 			return sendBadRequestResponse(c, err, "Email already exists")
 		}
@@ -114,17 +109,10 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	query := database.UserGetUserByEmailQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
 
 	user := model.User{}
 
-	err = stmt.QueryRow(loginEmail).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
+	err = database.POOL.QueryRow(context.Background(), query, loginEmail).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -165,17 +153,10 @@ func FetchCode(c *fiber.Ctx) error {
 	}
 
 	loginRequestQuery := database.LoginRequestGetByLoginRequestId
-	stmt, err := database.DB.Prepare(loginRequestQuery)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
 
 	loginRequest := model.LoginRequest{}
 
-	err = stmt.QueryRow(loginRequestDto.LoginCodeRequestId).Scan(
+	err := database.POOL.QueryRow(context.Background(), loginRequestQuery, loginRequestDto.LoginCodeRequestId).Scan(
 		&loginRequest.LoginRequestId,
 		&loginRequest.UserId,
 		&loginRequest.LoginRequestDate,
@@ -203,7 +184,7 @@ func FetchCode(c *fiber.Ctx) error {
 		return sendUnauthorizedResponse(c)
 	}
 
-	userFromDb, errFromDb := database.DB.Query("SELECT * FROM users WHERE user_id = $1", loginRequest.UserId)
+	userFromDb, errFromDb := database.POOL.Query(context.Background(), "SELECT * FROM users WHERE user_id = $1", loginRequest.UserId)
 
 	if errFromDb != nil {
 		return sendUnauthorizedResponse(c)
@@ -252,13 +233,6 @@ func isUserObjectNotNil(user *model.User) bool {
 
 func createLoginRequest(userId uuid.UUID) (*model.LoginRequest, error) {
 	query := database.CreateLoginRequestQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
 
 	loginRequestExpirationDate := time.Now().Add(time.Minute * 10)
 	loginCode, err := generateUniqueLoginCode()
@@ -267,7 +241,7 @@ func createLoginRequest(userId uuid.UUID) (*model.LoginRequest, error) {
 		return nil, err
 	}
 
-	rows, err := stmt.Query(userId, loginRequestExpirationDate, loginCode)
+	rows, err := database.POOL.Query(context.Background(), query, userId, loginRequestExpirationDate, loginCode)
 
 	if err != nil {
 		return nil, err
@@ -298,11 +272,13 @@ func generateUniqueLoginCode() (string, error) {
 		attempts++
 
 		loginCode := helper.GenerateCodeHelper()
-		rows, err := database.DB.Query(database.LoginRequestGetRequestByTokenIdQuery, loginCode)
+		rows, err := database.POOL.Query(context.Background(), database.LoginRequestGetRequestByTokenIdQuery, loginCode)
 
 		if err != nil {
 			return "", err
 		}
+
+		defer rows.Close()
 
 		if !rows.Next() {
 			return loginCode, nil
@@ -312,15 +288,8 @@ func generateUniqueLoginCode() (string, error) {
 
 func markLoginRequestAsCompleted(loginRequestId uuid.UUID) error {
 	query := database.LoginRequestMarkAsCompletedQuery
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(loginRequestId)
+	_, err := database.POOL.Exec(context.Background(), query, loginRequestId)
 
 	if err != nil {
 		return err
@@ -331,17 +300,10 @@ func markLoginRequestAsCompleted(loginRequestId uuid.UUID) error {
 
 func getNumberOfPendingLoginAttempts(email string) (int, error) {
 	query := database.LoginRequestGetPendingRequestsByLoginEmailQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return 0, err
-	}
-
-	defer stmt.Close()
 
 	var numberOfPendingLoginAttempts int
 
-	err = stmt.QueryRow(email).Scan(&numberOfPendingLoginAttempts)
+	err := database.POOL.QueryRow(context.Background(), query, email).Scan(&numberOfPendingLoginAttempts)
 
 	if err != nil {
 		return 0, err

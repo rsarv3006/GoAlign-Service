@@ -1,10 +1,13 @@
 package database
 
-import "log"
+import (
+	"context"
+	"log"
+)
 
 func CreateUserTable() {
 	log.Println("Creating users table")
-	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS users (
+	rows, err := POOL.Query(context.Background(), `CREATE TABLE IF NOT EXISTS users (
   user_id UUID PRIMARY KEY default gen_random_uuid(),
   username VARCHAR(50) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
@@ -14,6 +17,8 @@ func CreateUserTable() {
 );
 `)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -21,7 +26,7 @@ func CreateUserTable() {
 
 func CreateTeamTable() {
 	log.Println("Creating teams table")
-	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS teams (
+	rows, err := POOL.Query(context.Background(), `CREATE TABLE IF NOT EXISTS teams (
   team_id UUID NOT NULL PRIMARY KEY default gen_random_uuid(),
   team_name VARCHAR(255) NOT NULL,
   creator_user_id UUID NOT NULL REFERENCES users(user_id),
@@ -31,6 +36,8 @@ func CreateTeamTable() {
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );`)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +45,7 @@ func CreateTeamTable() {
 
 func CreateUserTeamMembershipTable() {
 	log.Println("Creating user_team_membership table")
-	_, err := DB.Query(`CREATE TABLE IF NOT EXISTS user_team_membership (
+	rows, err := POOL.Query(context.Background(), `CREATE TABLE IF NOT EXISTS user_team_membership (
   user_team_membership_id UUID NOT NULL PRIMARY KEY default gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(user_id),
   team_id UUID NOT NULL REFERENCES teams(team_id),
@@ -47,6 +54,8 @@ func CreateUserTeamMembershipTable() {
   status VARCHAR(255) NOT NULL DEFAULT 'active'
 );`)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -54,13 +63,15 @@ func CreateUserTeamMembershipTable() {
 
 func CreateTeamSettingsTable() {
 	log.Println("Creating team_settings table")
-	_, err := DB.Query(`
+	rows, err := POOL.Query(context.Background(), `
     CREATE TABLE IF NOT EXISTS team_settings (
       team_settings_id UUID NOT NULL PRIMARY KEY default gen_random_uuid(),
       team_id UUID NOT NULL REFERENCES teams(team_id),
       can_all_members_add_tasks BOOLEAN NOT NULL DEFAULT FALSE
     );
   `)
+
+	rows.Close()
 
 	if err != nil {
 		panic(err)
@@ -69,7 +80,7 @@ func CreateTeamSettingsTable() {
 
 func CreateTaskTable() {
 	log.Println("Creating tasks table")
-	_, err := DB.Query(`
+	rows, err := POOL.Query(context.Background(), `
 CREATE TABLE IF NOT EXISTS tasks (
   task_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
   task_name varchar NOT NULL,
@@ -90,6 +101,8 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
   `)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -97,7 +110,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 
 func CreateTaskEntryTable() {
 	log.Println("Creating task_entries table")
-	_, err := DB.Query(`
+	rows, err := POOL.Query(context.Background(), `
   CREATE TABLE IF NOT EXISTS task_entries (
   task_entry_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
   start_date timestamptz NOT NULL,
@@ -109,6 +122,8 @@ func CreateTaskEntryTable() {
   task_id uuid NOT NULL REFERENCES tasks(task_id)
 );`)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +131,7 @@ func CreateTaskEntryTable() {
 
 func CreateTeamInviteTable() {
 	log.Println("Creating team_invites table")
-	_, err := DB.Query(`
+	rows, err := POOL.Query(context.Background(), `
   CREATE TABLE IF NOT EXISTS team_invites (
   team_invite_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id uuid NOT NULL REFERENCES teams(team_id),
@@ -127,6 +142,8 @@ func CreateTeamInviteTable() {
   invite_creator_id uuid NOT NULL REFERENCES users(user_id)
 );`)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -134,7 +151,7 @@ func CreateTeamInviteTable() {
 
 func CreateAppLogsTable() {
 	log.Println("Creating app_logs table")
-	_, err := DB.Query(`
+	rows, err := POOL.Query(context.Background(), `
   CREATE TABLE IF NOT EXISTS app_logs (
   app_log_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
   log_message text NOT NULL,
@@ -144,6 +161,8 @@ func CreateAppLogsTable() {
   user_id uuid 
 );`)
 
+	rows.Close()
+
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +170,7 @@ func CreateAppLogsTable() {
 
 func CreateLoginRequestsTable() {
 	log.Println("Creating login_requests table")
-	_, err := DB.Query(`
+	rows, err := POOL.Query(context.Background(), `
   CREATE TABLE IF NOT EXISTS login_requests (
   login_request_id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES users(user_id),
@@ -160,6 +179,8 @@ func CreateLoginRequestsTable() {
   login_request_token varchar(255) NOT NULL,
   login_request_status varchar(50) NOT NULL DEFAULT 'pending'
 );`)
+
+	rows.Close()
 
 	if err != nil {
 		panic(err)

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/router"
 
@@ -17,6 +18,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	defer database.POOL.Close()
+
 	jwtSecret := os.Getenv("JWT_SECRET")
 	env := os.Getenv("ENV")
 
@@ -28,6 +31,8 @@ func main() {
 
 	println("Initializing emailer...")
 	brevoClient := initializeEmailer()
+
+	app.Use(pprof.New())
 
 	println("Setting context")
 	app.Use(func(c *fiber.Ctx) error {

@@ -5,7 +5,7 @@ Content-Type: application/json
 
 {
   "username": "meep",
-  "email": "meep@yeet.com"
+  "email": "meep3@yeet.com"
 }
 
 ### login
@@ -13,7 +13,7 @@ POST http://localhost:3000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "email": "meep@yeet.com"
+  "email": "meep3@yeet.com"
 }
 
 ### fetch code
@@ -21,9 +21,9 @@ POST http://localhost:3000/api/v1/auth/code
 Content-Type: application/json
 
 {
-  "login_code_request_id": "22efe4e1-6c6f-4831-9e52-ead3873e8c46",
-  "user_id": "9657a56d-904a-4b46-b7b7-e269aff003d1",
-  "login_request_token": "LYGPGX"
+  "login_code_request_id": "0e7d8d1f-a710-43c7-9125-cacb44c8574e",
+  "user_id": "403c262a-98d6-4d22-9628-9cff2a802603",
+  "login_request_token": "9BN74E"
 }
 
 ### other test user
@@ -48,7 +48,7 @@ Content-Type: application/json
 ### get teams by current user
 GET http://localhost:3000/api/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI0MDNjMjYyYS05OGQ2LTRkMjItOTYyOC05Y2ZmMmE4MDI2MDMiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXAzQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNyZWF0ZWRfYXQiOiIyMDIzLTEwLTI5VDIxOjI1OjAyLjQ1NTI0NVoifSwiZXhwIjoxNjk5MjM3NTc0fQ.cXcLChZbpAZXA7A-DZWpA1taELkFW68hnGLpxormO7Y
 
 ### create team
 POST http://localhost:3000/api/v1/team/
