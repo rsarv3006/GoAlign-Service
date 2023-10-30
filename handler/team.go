@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -16,13 +17,8 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
 	query := database.TeamGetByUserIdQueryString
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	rows, err := stmt.Query(currentUser.UserId)
+	rows, err := database.POOL.Query(context.Background(), query, currentUser.UserId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -91,6 +87,14 @@ func GetTeamsForCurrentUser(c *fiber.Ctx) error {
 		teamReturnArray = append(teamReturnArray, team)
 	}
 
+	defer func() {
+		teamReturnArray = make([]model.TeamReturnWithUsersAndTasks, 0)
+		teams = make([]model.Team, 0)
+		teamIds = make([]uuid.UUID, 0)
+		users = make(map[uuid.UUID][]model.User)
+		tasks = make(map[uuid.UUID][]model.TaskReturnWithTaskEntries)
+	}()
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Success",
 		"teams":   teamReturnArray,
@@ -112,26 +116,11 @@ func CreateTeam(c *fiber.Ctx) error {
 	}
 
 	query := database.TeamCreateQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		switch e := err.(type) {
-		case *pq.Error:
-			fmt.Println("Postgres error:", e.Message)
-
-		default:
-			fmt.Println("Unknown error:", e)
-		}
-
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
 
 	team := new(model.Team)
 
 	cleanedTeamName := helper.SanitizeInput(teamDto.TeamName)
-	rows, err := stmt.Query(cleanedTeamName, currentUser.UserId, currentUser.UserId)
+	rows, err := database.POOL.Query(context.Background(), query, cleanedTeamName, currentUser.UserId, currentUser.UserId)
 
 	if err != nil {
 		switch e := err.(type) {
@@ -181,6 +170,16 @@ func CreateTeam(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
+	defer func() {
+		teamDto = nil
+		team = nil
+		teamUsers = nil
+		teamTasks = nil
+		teamReturn = model.TeamReturnWithUsersAndTasks{}
+		teamSettingsDto = nil
+		teamSettings = nil
+	}()
+
 	return c.Status(201).JSON(&fiber.Map{
 		"message":  "Team created successfully",
 		"team":     teamReturn,
@@ -190,15 +189,8 @@ func CreateTeam(c *fiber.Ctx) error {
 
 func getTeamsByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID]model.TeamReturnWithUsersAndTasks, error) {
 	query := database.TeamGetByIdsQueryString
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(pq.Array(teamIds))
+	rows, err := database.POOL.Query(context.Background(), query, pq.Array(teamIds))
 
 	if err != nil {
 		return nil, err
@@ -333,16 +325,8 @@ func DeleteTeam(c *fiber.Ctx) error {
 }
 
 func deleteTeam(teamId uuid.UUID) error {
-	query := database.TeamDeleteQueryString
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
+	_, err := database.POOL.Exec(context.Background(), database.TeamDeleteQueryString, teamId)
 
 	if err != nil {
 		return err
@@ -353,15 +337,8 @@ func deleteTeam(teamId uuid.UUID) error {
 
 func isUserATeamManagerOfAnyTeam(userId uuid.UUID) bool {
 	query := database.TeamGetByTeamManagerIdQueryString
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return false
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(userId)
+	rows, err := database.POOL.Query(context.Background(), query, userId)
 
 	if err != nil {
 		return false
@@ -443,15 +420,8 @@ func UpdateTeamManagerEndpoint(c *fiber.Ctx) error {
 	}
 
 	query := database.TeamUpdateTeamManagerQueryString
-	stmt, err := database.DB.Prepare(query)
 
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamManagerId, teamId)
+	rows, err := database.POOL.Query(context.Background(), query, teamManagerId, teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
