@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 )
@@ -8,15 +10,7 @@ import (
 func UpdateExpiredLoginRequestsEndpoint(c *fiber.Ctx) error {
 	query := database.LoginRequestMarkAsExpiredQuery
 
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query()
+	rows, err := database.POOL.Query(context.Background(), query)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)

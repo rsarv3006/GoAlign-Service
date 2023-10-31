@@ -44,18 +44,11 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 		return nil, errors.New("User is not the team manager")
 	}
 
-	query := database.TaskEntryCreateQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
 	taskEntry := new(model.TaskEntry)
 
-	rows, err := stmt.Query(
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskEntryCreateQuery,
 		taskEntryCreateDto.StartDate,
 		taskEntryCreateDto.EndDate,
 		taskEntryCreateDto.Notes,
@@ -92,16 +85,10 @@ func createTaskEntry(taskEntryCreateDto *model.TaskEntryCreateDto, currentUserId
 }
 
 func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssignedUser, error) {
-	query := database.TaskEntryGetByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskEntryGetByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return nil, err
@@ -152,16 +139,10 @@ func getTaskEntriesByTeamId(teamId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 }
 
 func deleteTaskEntriesByTaskId(taskId uuid.UUID) error {
-	query := database.TaskEntryDeleteByTaskIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(taskId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TaskEntryDeleteByTaskIdQuery,
+		taskId)
 
 	if err != nil {
 		return err
@@ -171,16 +152,10 @@ func deleteTaskEntriesByTaskId(taskId uuid.UUID) error {
 }
 
 func deleteTaskEntriesByTeamId(teamId uuid.UUID) error {
-	query := database.TaskEntryDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TaskEntryDeleteByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return err
@@ -225,16 +200,10 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 		return sendForbiddenResponse(c)
 	}
 
-	query := database.TaskEntryMarkCompleteQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(taskEntryId)
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.TaskEntryMarkCompleteQuery,
+		taskEntryId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -290,18 +259,12 @@ func MarkTaskEntryCompleteEndpoint(c *fiber.Ctx) error {
 }
 
 func getTaskEntryByTaskEntryId(taskEntryId uuid.UUID) (*model.TaskEntry, error) {
-	query := database.TaskEntryGetByTaskEntryIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
 	taskEntry := new(model.TaskEntry)
 
-	rows, err := stmt.Query(taskEntryId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskEntryGetByTaskEntryIdQuery,
+		taskEntryId)
 
 	if err != nil {
 		return nil, err
@@ -357,16 +320,10 @@ func CancelCurrentTaskEntryEndpoint(c *fiber.Ctx) error {
 		return sendForbiddenResponse(c)
 	}
 
-	query := database.TaskEntryCancelCurrentTaskEntryQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	_, err = stmt.Exec(taskEntryId)
-
-	defer stmt.Close()
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.TaskEntryCancelCurrentTaskEntryQuery,
+		taskEntryId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -458,18 +415,12 @@ func getTaskEntriesByTaskIdArray(taskIds []uuid.UUID) (map[uuid.UUID][]model.Tas
 }
 
 func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssignedUser, error) {
-	query := database.TaskEntriesGetByTaskIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
 	taskEntries := make([]model.TaskEntryReturnWithAssignedUser, 0)
 
-	rows, err := stmt.Query(taskId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TaskEntriesGetByTaskIdQuery,
+		taskId)
 
 	if err != nil {
 		return nil, err
@@ -499,6 +450,10 @@ func getTaskEntriesByTaskId(taskId uuid.UUID) ([]model.TaskEntryReturnWithAssign
 
 		taskEntries = append(taskEntries, taskEntryReturnWithAssignedUser)
 	}
+
+	defer func() {
+		taskEntries = make([]model.TaskEntryReturnWithAssignedUser, 0)
+	}()
 
 	return taskEntries, nil
 }
@@ -607,16 +562,11 @@ func createTaskEntryFromPreviousTaskEntry(
 }
 
 func updateTaskEntryAssignedUserId(taskEntryId uuid.UUID, userId uuid.UUID) error {
-	query := database.TaskEntryUpdateAssignedUserIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(userId, taskEntryId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TaskEntryUpdateAssignedUserIdQuery,
+		userId,
+		taskEntryId)
 
 	if err != nil {
 		return err
@@ -626,16 +576,10 @@ func updateTaskEntryAssignedUserId(taskEntryId uuid.UUID, userId uuid.UUID) erro
 }
 
 func markTaskEntryAsCompleteByTaskId(taskId uuid.UUID) error {
-	query := database.TaskEntryMarkAsCompleteByTaskIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(taskId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TaskEntryMarkAsCompleteByTaskIdQuery,
+		taskId)
 
 	if err != nil {
 		return err

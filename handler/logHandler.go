@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
@@ -25,16 +27,9 @@ func LogEventEndpoint(c *fiber.Ctx) error {
 }
 
 func logEvent(logCreateDto *model.LogCreateDto, userId uuid.UUID) error {
-	query := database.LogCreateQueryWithJsonAndUserId
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	row, err := stmt.Query(
+	row, err := database.POOL.Query(
+		context.Background(),
+		database.LogCreateQueryWithJsonAndUserId,
 		logCreateDto.LogMessage,
 		logCreateDto.LogLevel,
 		logCreateDto.LogData,
@@ -51,16 +46,9 @@ func logEvent(logCreateDto *model.LogCreateDto, userId uuid.UUID) error {
 }
 
 func logEventOnlyMessage(logCreateDto *model.LogCreateDto) error {
-	query := database.LogCreateQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.LogCreateQuery,
 		logCreateDto.LogMessage,
 		logCreateDto.LogLevel,
 	)
