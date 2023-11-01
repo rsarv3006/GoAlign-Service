@@ -10,6 +10,7 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/router"
 
 	brevo "github.com/getbrevo/brevo-go/lib"
+	"github.com/goccy/go-json"
 )
 
 func main() {
@@ -26,7 +27,9 @@ func main() {
 	println("Connected to database...")
 
 	app := fiber.New(fiber.Config{
-		Prefork: true,
+		Prefork:     false,
+		JSONDecoder: json.Unmarshal,
+		JSONEncoder: json.Marshal,
 	})
 
 	println("Initializing emailer...")
