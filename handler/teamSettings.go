@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/gofiber/fiber/v2"
@@ -10,18 +11,13 @@ import (
 )
 
 func CreateTeamSettings(dto model.TeamSettingsCreateDto) (*model.TeamSettings, error) {
-	query := database.TeamSettingsCreateQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
 	var teamSettings *model.TeamSettings
 
-	rows, err := stmt.Query(dto.TeamId, dto.CanAllMembersAddTasks)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamSettingsCreateQuery,
+		dto.TeamId,
+		dto.CanAllMembersAddTasks)
 
 	if err != nil {
 		return nil, err
@@ -46,16 +42,10 @@ func CreateTeamSettings(dto model.TeamSettingsCreateDto) (*model.TeamSettings, e
 }
 
 func DeleteTeamSettingsByTeamId(teamId uuid.UUID) error {
-	query := database.TeamSettingsDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TeamSettingsDeleteByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return err
@@ -93,16 +83,11 @@ func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Invalid request body")
 	}
 
-	query := database.TeamSettingsUpdateQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamSettingsDto.CanAllMembersAddTasks, teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamSettingsUpdateQuery,
+		teamSettingsDto.CanAllMembersAddTasks,
+		teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -129,16 +114,10 @@ func UpdateTeamSettingsEndpoint(c *fiber.Ctx) error {
 }
 
 func getTeamSettingsByTeamId(teamId uuid.UUID) (*model.TeamSettings, error) {
-	query := database.TeamSettingsGetByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamSettingsGetByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return nil, err

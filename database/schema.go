@@ -22,6 +22,13 @@ func CreateUserTable() {
 	if err != nil {
 		panic(err)
 	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_users_email ON users (email);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func CreateTeamTable() {
@@ -36,6 +43,13 @@ func CreateTeamTable() {
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );`)
 
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_teams_team_manager_id ON teams (team_manager_id);`)
 	rows.Close()
 
 	if err != nil {
@@ -59,6 +73,21 @@ func CreateUserTeamMembershipTable() {
 	if err != nil {
 		panic(err)
 	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_user_team_membership_user_id ON user_team_membership (user_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_user_team_membership_team_id ON user_team_membership (team_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func CreateTeamSettingsTable() {
@@ -76,6 +105,14 @@ func CreateTeamSettingsTable() {
 	if err != nil {
 		panic(err)
 	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_team_settings_teamId ON team_settings (team_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func CreateTaskTable() {
@@ -106,6 +143,13 @@ CREATE TABLE IF NOT EXISTS tasks (
 	if err != nil {
 		panic(err)
 	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_tasks_team_id ON tasks (team_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func CreateTaskEntryTable() {
@@ -127,6 +171,21 @@ func CreateTaskEntryTable() {
 	if err != nil {
 		panic(err)
 	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_task_entries_assigned_user_id ON task_entries (assigned_user_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_task_entries_task_id ON tasks_entries (task_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func CreateTeamInviteTable() {
@@ -147,6 +206,21 @@ func CreateTeamInviteTable() {
 	if err != nil {
 		panic(err)
 	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_team_invites_email ON team_invites (email);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_team_invites_team_id ON team_invites (team_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func CreateAppLogsTable() {
@@ -180,6 +254,20 @@ func CreateLoginRequestsTable() {
   login_request_status varchar(50) NOT NULL DEFAULT 'pending'
 );`)
 
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_login_requests_user_id ON login_requests (user_id);`)
+	rows.Close()
+
+	if err != nil {
+		panic(err)
+	}
+
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_login_requests_login_request_status ON login_requests (login_request_status);`)
 	rows.Close()
 
 	if err != nil {

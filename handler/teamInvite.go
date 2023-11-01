@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -23,34 +24,21 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 
 	teamInviteEmail := strings.ToLower(teamInviteCreateDto.Email)
 
-	query := database.TeamInviteCreateQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	isValidEmailAddress := helper.IsValidEmailAddress(teamInviteEmail)
 
 	if !isValidEmailAddress {
 		return sendBadRequestResponse(c, errors.New("Invalid email address"), "Invalid email address")
 	}
 
-	isAlreadyInTeamQuery := database.UserTeamMembershipGetByUserEmailAndTeamIdQueryString
-	isAlreadyInTeamStmt, err := database.DB.Prepare(isAlreadyInTeamQuery)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer isAlreadyInTeamStmt.Close()
-
-	isAlreadyInTeamRows, err := isAlreadyInTeamStmt.Query(teamInviteCreateDto.TeamId, teamInviteEmail)
+	isAlreadyInTeamRows, err := database.POOL.Query(
+		context.Background(),
+		database.UserTeamMembershipGetByUserEmailAndTeamIdQueryString,
+		teamInviteCreateDto.TeamId,
+		teamInviteEmail)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
+			defer isAlreadyInTeamRows.Close()
 			return sendBadRequestResponse(c, errors.New("Team does not exist"), "Team does not exist")
 		}
 
@@ -63,20 +51,15 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, errors.New("Email already in team"), "Email already in team")
 	}
 
-	isAlreadyInvitedQuery := database.TeamInviteGetByEmailAndTeamIdQueryString
-
-	isAlreadyInvitedStmt, err := database.DB.Prepare(isAlreadyInvitedQuery)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer isAlreadyInvitedStmt.Close()
-
-	isAlreadyInvitedRows, err := isAlreadyInvitedStmt.Query(teamInviteEmail, teamInviteCreateDto.TeamId)
+	isAlreadyInvitedRows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamInviteGetByEmailAndTeamIdQueryString,
+		teamInviteEmail,
+		teamInviteCreateDto.TeamId)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
+			defer isAlreadyInvitedRows.Close()
 			return sendBadRequestResponse(c, errors.New("Team does not exist"), "Team does not exist")
 		}
 
@@ -89,9 +72,12 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, errors.New("Email already invited"), "Email already invited")
 	}
 
-	defer isAlreadyInvitedStmt.Close()
-
-	_, err = stmt.Exec(teamInviteCreateDto.TeamId, teamInviteEmail, currentUser.UserId)
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.TeamInviteCreateQueryString,
+		teamInviteCreateDto.TeamId,
+		teamInviteEmail,
+		currentUser.UserId)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "violates foreign key constraint") {
@@ -109,18 +95,12 @@ func CreateTeamInviteEndpoint(c *fiber.Ctx) error {
 func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
-	query := database.TeamInviteGetByIdQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	teamInvite := new(model.TeamInvite)
 
-	rows, err := stmt.Query(c.Params("teamInviteId"))
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamInviteGetByIdQueryString,
+		c.Params("teamInviteId"))
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -146,15 +126,6 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Team invite is not pending")
 	}
 
-	query = database.TeamInviteAcceptQueryString
-	stmt, err = database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	teamInviteId := c.Params("teamInviteId")
 
 	teamInviteIdUUID, err := uuid.Parse(teamInviteId)
@@ -163,7 +134,10 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Error parsing team invite id")
 	}
 
-	_, err = stmt.Exec(teamInviteIdUUID)
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.TeamInviteAcceptQueryString,
+		teamInviteIdUUID)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -189,19 +163,13 @@ func AcceptTeamInviteEndpoint(c *fiber.Ctx) error {
 }
 
 func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
-	query := database.TeamInviteGetByIdQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	teamInvite := new(model.TeamInvite)
 	teamInviteId := c.Params("teamInviteId")
 
-	rows, err := stmt.Query(teamInviteId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamInviteGetByIdQueryString,
+		teamInviteId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -227,16 +195,10 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Team invite is not pending")
 	}
 
-	query = database.TeamInviteDeclineQueryString
-	stmt, err = database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamInviteId)
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.TeamInviteDeclineQueryString,
+		teamInviteId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -248,16 +210,10 @@ func DeclineTeamInviteEndpoint(c *fiber.Ctx) error {
 func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
-	query := database.TeamInvitesForCurrentUserQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(strings.ToLower(currentUser.Email))
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamInvitesForCurrentUserQueryString,
+		strings.ToLower(currentUser.Email))
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -334,19 +290,13 @@ func isAllowedToDeleteTeamInvite(teamInvite *model.TeamInvite, currentUser *mode
 func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
-	query := database.TeamInviteGetByIdQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
 	teamInvite := new(model.TeamInvite)
 	teamInviteId := c.Params("teamInviteId")
 
-	rows, err := stmt.Query(teamInviteId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamInviteGetByIdQueryString,
+		teamInviteId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -374,16 +324,10 @@ func DeleteTeamInviteEndpoint(c *fiber.Ctx) error {
 		return sendForbiddenResponse(c)
 	}
 
-	query = database.TeamInviteDeleteQueryString
-	stmt, err = database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamInviteId)
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.TeamInviteDeleteQueryString,
+		teamInviteId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -412,16 +356,10 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 		return sendForbiddenResponse(c)
 	}
 
-	query := database.TeamInviteGetByTeamIdQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.TeamInviteGetByTeamIdQueryString,
+		teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -473,16 +411,10 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 }
 
 func deleteTeamInvitesByUserEmail(email string) error {
-	query := database.TeamInviteDeleteByUserEmailQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(strings.ToLower(email))
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TeamInviteDeleteByUserEmailQueryString,
+		strings.ToLower(email))
 
 	if err != nil {
 		return err
@@ -492,16 +424,10 @@ func deleteTeamInvitesByUserEmail(email string) error {
 }
 
 func deleteTeamInvitesByTeamId(teamId uuid.UUID) error {
-	query := database.TeamInviteDeleteByTeamIdQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.TeamInviteDeleteByTeamIdQueryString,
+		teamId)
 
 	if err != nil {
 		return err

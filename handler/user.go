@@ -42,16 +42,10 @@ func DeleteUserEndpoint(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	query := database.UserDeleteUserQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(userId)
+	_, err = database.POOL.Exec(
+		context.Background(),
+		database.UserDeleteUserQuery,
+		userId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -61,18 +55,12 @@ func DeleteUserEndpoint(c *fiber.Ctx) error {
 }
 
 func getUsersByTeamId(teamId uuid.UUID) ([]model.User, error) {
-	query := database.UserGetUsersByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
 	var users []model.User
 
-	if err != nil {
-		return users, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserGetUsersByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return users, err
@@ -123,18 +111,12 @@ func getUsersByIdArray(userIds []uuid.UUID) (map[uuid.UUID]model.User, error) {
 }
 
 func getUsersByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.User, error) {
-	query := database.UserGetUsersByTeamIdArrayQuery
-	stmt, err := database.DB.Prepare(query)
-
 	users := make(map[uuid.UUID][]model.User)
 
-	if err != nil {
-		return users, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(pq.Array(teamIds))
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserGetUsersByTeamIdArrayQuery,
+		pq.Array(teamIds))
 
 	if err != nil {
 		return users, err
@@ -158,18 +140,18 @@ func getUsersByTeamIdArray(teamIds []uuid.UUID) (map[uuid.UUID][]model.User, err
 }
 
 func getUserById(userId uuid.UUID) (model.User, error) {
-	query := database.UserGetUserByIdQuery
-	stmt, err := database.DB.Prepare(query)
-
 	var user model.User
 
-	if err != nil {
-		return user, err
-	}
-
-	defer stmt.Close()
-
-	err = stmt.QueryRow(userId).Scan(&user.UserId, &user.UserName, &user.Email, &user.IsActive, &user.IsEmailVerified, &user.CreatedAt)
+	err := database.POOL.QueryRow(
+		context.Background(),
+		database.UserGetUserByIdQuery,
+		userId).Scan(
+		&user.UserId,
+		&user.UserName,
+		&user.Email,
+		&user.IsActive,
+		&user.IsEmailVerified,
+		&user.CreatedAt)
 
 	if err != nil {
 		return user, err
@@ -179,16 +161,10 @@ func getUserById(userId uuid.UUID) (model.User, error) {
 }
 
 func deleteUserLoginRequestsByUserId(userId uuid.UUID) error {
-	query := database.UserDeleteUserLoginRequestsByUserIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(userId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.UserDeleteUserLoginRequestsByUserIdQuery,
+		userId)
 
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -11,17 +12,13 @@ import (
 )
 
 func CreateUserTeamMembership(userId uuid.UUID, teamId uuid.UUID) (*model.UserTeamMembership, error) {
-	query := database.UserTeamMembershipCreateQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-	defer stmt.Close()
-
 	userTeamMembership := new(model.UserTeamMembership)
 
-	rows, err := stmt.Query(userId, teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserTeamMembershipCreateQuery,
+		userId,
+		teamId)
 
 	if err != nil {
 		return nil, err
@@ -41,16 +38,10 @@ func CreateUserTeamMembership(userId uuid.UUID, teamId uuid.UUID) (*model.UserTe
 }
 
 func getUserTeamMemberships(teamId uuid.UUID) ([]model.UserTeamMembership, error) {
-	query := database.UserTeamMembershipGetByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserTeamMembershipGetByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return nil, err
@@ -76,16 +67,11 @@ func getUserTeamMemberships(teamId uuid.UUID) ([]model.UserTeamMembership, error
 }
 
 func isUserInTeam(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
-	query := database.UserTeamMembershipGetByUserIdAndTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return false, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(userId, teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserTeamMembershipGetByUserIdAndTeamIdQuery,
+		userId,
+		teamId)
 
 	if err != nil {
 		return false, err
@@ -101,16 +87,10 @@ func isUserInTeam(userId uuid.UUID, teamId uuid.UUID) (bool, error) {
 }
 
 func deleteUserTeamMembershipsByTeamId(teamId uuid.UUID) error {
-	query := database.UserTeamMembershipDeleteByTeamIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(teamId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.UserTeamMembershipDeleteByTeamIdQuery,
+		teamId)
 
 	if err != nil {
 		return err
@@ -120,16 +100,10 @@ func deleteUserTeamMembershipsByTeamId(teamId uuid.UUID) error {
 }
 
 func deleteUserTeamMembershipsByUserId(userId uuid.UUID) error {
-	query := database.UserTeamMembershipDeleteByUserIdQuery
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return err
-	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(userId)
+	_, err := database.POOL.Exec(
+		context.Background(),
+		database.UserTeamMembershipDeleteByUserIdQuery,
+		userId)
 
 	if err != nil {
 		return err
@@ -194,16 +168,10 @@ func RemoveUserFromTeamEndpoint(c *fiber.Ctx) error {
 		return sendBadRequestResponse(c, err, "Not allowed to delete user from team")
 	}
 
-	query := database.UserTeamMembershipDeleteQueryString
-	stmt, err := database.DB.Prepare(query)
-
-	if err != nil {
-		return sendInternalServerErrorResponse(c, err)
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(userId, teamId)
+	rows, err := database.POOL.Query(
+		context.Background(),
+		database.UserTeamMembershipDeleteQueryString,
+		userId, teamId)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
