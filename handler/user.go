@@ -10,6 +10,12 @@ import (
 	"gitlab.com/donutsahoy/yourturn-fiber/model"
 )
 
+func GetUserEndpoint(c *fiber.Ctx) error {
+	currentUser := c.Locals("currentUser").(*model.User)
+
+	return c.JSON(currentUser)
+}
+
 func DeleteUserEndpoint(c *fiber.Ctx) error {
 	currentUser := c.Locals("currentUser").(*model.User)
 
@@ -105,7 +111,13 @@ func getUsersByIdArray(userIds []uuid.UUID) (map[uuid.UUID]model.User, error) {
 		}
 
 		users[user.UserId] = user
+		user = model.User{}
 	}
+
+	// TODO: Confirm this didn't break anything
+	defer func() {
+		users = nil
+	}()
 
 	return users, nil
 }

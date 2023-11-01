@@ -88,6 +88,7 @@ func setUpUserRoutes(api fiber.Router) {
 	user := api.Group("/v1/user")
 	user.Use(middleware.IsExpired())
 
+	user.Get("/", handler.GetUserEndpoint)
 	user.Delete("/", handler.DeleteUserEndpoint)
 }
 

@@ -262,6 +262,15 @@ func GetTeamInvitesForCurrentUserEndpoint(c *fiber.Ctx) error {
 		teamInvitesWithData = append(teamInvitesWithData, teamInvite)
 	}
 
+	defer func() {
+		teamInvitesWithData = nil
+		teams = nil
+		inviteCreators = nil
+		teamIds = nil
+		inviteCreatorIds = nil
+		teamInvites = nil
+	}()
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Team invites for current user",
 		"invites": teamInvitesWithData,
@@ -403,6 +412,13 @@ func GetTeamInvitesByTeamIdEndpoint(c *fiber.Ctx) error {
 
 		teamInvitesWithData = append(teamInvitesWithData, teamInvite)
 	}
+
+	defer func() {
+		teamInvitesWithData = nil
+		teamInvites = nil
+		creatorIds = nil
+		creators = nil
+	}()
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":     "Team invites by team id",

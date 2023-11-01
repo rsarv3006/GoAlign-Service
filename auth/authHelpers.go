@@ -18,6 +18,11 @@ type JWTClaims struct {
 
 const SevenDays = 7 * 24 * time.Hour
 
+var (
+	ErrExpired = errors.New("token expired")
+	ErrInvalid = errors.New("couldn't parse claims")
+)
+
 func GenerateJWT(user model.User, ctx *fiber.Ctx) (*string, error) {
 	jwtSecretString := ctx.Locals("JwtSecret").(string)
 	jwtKey := []byte(jwtSecretString)
@@ -51,12 +56,10 @@ func ValidateToken(signedToken string, ctx *fiber.Ctx) (*model.User, error) {
 	}
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
-		err = errors.New("couldn't parse claims")
-		return nil, err
+		return nil, ErrInvalid
 	}
 	if claims.ExpiresAt < time.Now().Local().Unix() {
-		err = errors.New("token expired")
-		return nil, err
+		return nil, ErrExpired
 	}
 	return &claims.User, nil
 }
