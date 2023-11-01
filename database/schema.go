@@ -179,7 +179,7 @@ func CreateTaskEntryTable() {
 		panic(err)
 	}
 
-	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_task_entries_task_id ON tasks_entries (task_id);`)
+	rows, err = POOL.Query(context.Background(), `CREATE INDEX idx_task_entries_task_id ON task_entries (task_id);`)
 	rows.Close()
 
 	if err != nil {
