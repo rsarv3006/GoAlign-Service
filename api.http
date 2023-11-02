@@ -46,14 +46,14 @@ Content-Type: application/json
 
 ### TEAM
 ### get teams by current user
-GET http://localhost:3000/api/team/
+GET http://localhost:3000/api/v1/team/
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI0MDNjMjYyYS05OGQ2LTRkMjItOTYyOC05Y2ZmMmE4MDI2MDMiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXAzQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNyZWF0ZWRfYXQiOiIyMDIzLTEwLTI5VDIxOjI1OjAyLjQ1NTI0NVoifSwiZXhwIjoxNjk5MjM3NTc0fQ.cXcLChZbpAZXA7A-DZWpA1taELkFW68hnGLpxormO7Y
 
 ### create team
 POST http://localhost:3000/api/v1/team/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjMDM1NmQyNS1lMzg2LTQ4NGUtYjgyNS1hNTI3MDgwOGVjYjQiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMTJUMjI6NTM6MjkuMjI2NTU5WiJ9LCJleHAiOjE2OTQ1ODA4NzN9.s_dlsp2h6sddpqebFVnINHbTik5VJU-ta8O8aJB_kPQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI0MDNjMjYyYS05OGQ2LTRkMjItOTYyOC05Y2ZmMmE4MDI2MDMiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXAzQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNyZWF0ZWRfYXQiOiIyMDIzLTEwLTI5VDIxOjI1OjAyLjQ1NTI0NVoifSwiZXhwIjoxNjk5MjM3NTc0fQ.cXcLChZbpAZXA7A-DZWpA1taELkFW68hnGLpxormO7Y
 
 {
   "team_name": "lookMaNewTeam"
@@ -97,18 +97,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 ### create task
 POST http://localhost:3000/api/v1/task/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiJjMDM1NmQyNS1lMzg2LTQ4NGUtYjgyNS1hNTI3MDgwOGVjYjQiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMTJUMjI6NTM6MjkuMjI2NTU5WiJ9LCJleHAiOjE2OTQ3NDU4MjN9.rYXsn92uzpcG0O_4bXGnZZhpKzqh6Pc_DtccaS6AjaA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI0MDNjMjYyYS05OGQ2LTRkMjItOTYyOC05Y2ZmMmE4MDI2MDMiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXAzQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNyZWF0ZWRfYXQiOiIyMDIzLTEwLTI5VDIxOjI1OjAyLjQ1NTI0NVoifSwiZXhwIjoxNjk5MjM3NTc0fQ.cXcLChZbpAZXA7A-DZWpA1taELkFW68hnGLpxormO7Y
 
 {
   "task_name": "waffles",
   "notes": "waffles are good",
   "required_completions_needed": 2,
-  "team_id": "d708f1d1-94ee-48e9-bae3-8453a21f18f0",
-  "start_date": "2023-09-25T03:21:17Z",
+  "team_id": "40b9f547-5779-4507-ab09-7d80a7c5857c",
+  "start_date": "2023-11-25T03:21:17Z",
   "interval_between_windows":{"interval_count":1,"interval_unit":"day(s)"},
   "window_duration":{"interval_count":1,"interval_unit":"day(s)"},
   "status": "active",
-  "assigned_user_id": "c0356d25-e386-484e-b825-a5270808ecb4"
+  "assigned_user_id": "403c262a-98d6-4d22-9628-9cff2a802603"
 }
 
 ### update task
@@ -129,9 +129,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfa
 }
 
 ### get tasks by current user
-GET http://localhost:3000/api/task/assignedToCurrentUser
+GET http://localhost:3000/api/v1/task/assignedToCurrentUser
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI4YzBiNjhhYi0zMTUwLTRhODYtOTM4Zi1jMDlmODJjNGEzN2UiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXBAeWVldC5jb20iLCJpc19hY3RpdmUiOnRydWUsImlzX2VtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiY3JlYXRlZF9hdCI6IjIwMjMtMDktMDRUMjE6NDI6MjguNTU5NTk1WiJ9LCJleHAiOjUyOTM5MjA4Mzh9.nBg6jWvyy6dzvndBxOE32XlhN0DBY87aOK1W1WME2pA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VyIjp7InVzZXJfaWQiOiI0MDNjMjYyYS05OGQ2LTRkMjItOTYyOC05Y2ZmMmE4MDI2MDMiLCJ1c2VybmFtZSI6Im1lZXAiLCJlbWFpbCI6Im1lZXAzQHllZXQuY29tIiwiaXNfYWN0aXZlIjp0cnVlLCJpc19lbWFpbF92ZXJpZmllZCI6ZmFsc2UsImNyZWF0ZWRfYXQiOiIyMDIzLTEwLTI5VDIxOjI1OjAyLjQ1NTI0NVoifSwiZXhwIjoxNjk5MjM3NTc0fQ.cXcLChZbpAZXA7A-DZWpA1taELkFW68hnGLpxormO7Y
 
 ### get tasks by team id
 GET http://localhost:3000/api/v1/task/byTeam/f0636285-ad3f-471f-96d3-5331c3935658

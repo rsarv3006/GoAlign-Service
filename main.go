@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"gitlab.com/donutsahoy/yourturn-fiber/database"
 	"gitlab.com/donutsahoy/yourturn-fiber/router"
 
@@ -35,7 +37,13 @@ func main() {
 	println("Initializing emailer...")
 	brevoClient := initializeEmailer()
 
-	app.Use(pprof.New())
+	if env != "production" {
+		println("Enabling pprof...")
+		app.Use(pprof.New())
+	}
+
+	app.Use(helmet.New())
+	app.Use(recover.New())
 
 	println("Setting context")
 	app.Use(func(c *fiber.Ctx) error {
@@ -46,6 +54,7 @@ func main() {
 		c.Locals("JwtSecret", jwtSecret)
 		c.Locals("Env", env)
 		c.Locals("BrevoClient", brevoClient)
+		c.Locals("APPLE_CODE", os.Getenv("APPLE_CODE"))
 
 		return c.Next()
 	})

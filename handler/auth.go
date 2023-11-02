@@ -64,7 +64,10 @@ func Register(c *fiber.Ctx) error {
 		}
 	}
 
-	loginRequest, err := createLoginRequest(user.UserId)
+	isAppleTestAccount := user.Email == "apple.goalign.test"
+	appleCode := c.Locals("APPLE_CODE").(string)
+
+	loginRequest, err := createLoginRequest(user.UserId, isAppleTestAccount, appleCode)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -121,7 +124,10 @@ func Login(c *fiber.Ctx) error {
 		return sendInternalServerErrorResponse(c, err)
 	}
 
-	loginRequest, err := createLoginRequest(user.UserId)
+	isUserAppleTest := user.Email == "apple@goalign.test"
+	appleCode := c.Locals("APPLE_CODE").(string)
+
+	loginRequest, err := createLoginRequest(user.UserId, isUserAppleTest, appleCode)
 
 	if err != nil {
 		return sendInternalServerErrorResponse(c, err)
@@ -129,7 +135,7 @@ func Login(c *fiber.Ctx) error {
 
 	environment := c.Locals("Env").(string)
 
-	if environment == "production" {
+	if environment == "production" && user.Email != "apple@goalign.test" {
 		didSucceed, err := auth.SendEmailWithCode(c, loginRequest.LoginRequestToken, user.UserName, user.Email)
 
 		if err != nil || !didSucceed {
@@ -231,11 +237,18 @@ func isUserObjectNotNil(user *model.User) bool {
 
 }
 
-func createLoginRequest(userId uuid.UUID) (*model.LoginRequest, error) {
+func createLoginRequest(userId uuid.UUID, isAppleTestAccount bool, appleCode string) (*model.LoginRequest, error) {
 	query := database.CreateLoginRequestQuery
 
 	loginRequestExpirationDate := time.Now().Add(time.Minute * 10)
-	loginCode, err := generateUniqueLoginCode()
+	loginCode := ""
+	var err error
+
+	if isAppleTestAccount {
+		loginCode = appleCode
+	} else {
+		loginCode, err = generateUniqueLoginCode()
+	}
 
 	if err != nil {
 		return nil, err
