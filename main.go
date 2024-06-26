@@ -74,7 +74,8 @@ func main() {
 
 func initializeEmailer() *brevo.APIClient {
 	cfg := brevo.NewConfiguration()
-	cfg.AddDefaultHeader("api-key", "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")
+	apiKey := os.Getenv("BREVO_API_KEY")
+	cfg.AddDefaultHeader("api-key", apiKey)
 
 	return brevo.NewAPIClient(cfg)
 }
