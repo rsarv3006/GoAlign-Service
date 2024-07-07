@@ -50,3 +50,9 @@ func sendForbiddenResponse(c *fiber.Ctx) error {
 		"message": "Forbidden",
 	})
 }
+
+func StatusCheck(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "OK",
+	})
+}

@@ -21,6 +21,8 @@ func SetupRoutes(app *fiber.App) {
 	setUpLoggingRoutes(api)
 
 	setUpAdminRoutes(api)
+
+	api.Get("/status", handler.StatusCheck)
 }
 
 func setupAuthRoutes(api fiber.Router) {

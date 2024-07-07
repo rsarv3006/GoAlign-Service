@@ -1,3 +1,4 @@
+.env
 tmp/
 .DS_Store
 tmp/*
@@ -6,5 +7,5 @@ tmp/**/*
 /tmp/
 
 .env*
-.env
 /yourturn-fiber
+
